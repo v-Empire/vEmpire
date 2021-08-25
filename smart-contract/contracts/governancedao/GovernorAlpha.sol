@@ -11,7 +11,7 @@ contract GovernorAlpha {
     string public constant name = "VEMPIRE Governor Alpha";
 
     // @notice The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
-    function quorumVotes() public pure returns (uint) { return 1; }
+    function quorumVotes() public pure returns (uint) { return 30; }
 
     // @notice The maximum number of actions that can be included in a proposal
     function proposalMaxOperations() public pure returns (uint) { return 10; } // 10 actions
@@ -20,7 +20,7 @@ contract GovernorAlpha {
     function votingDelay() public pure returns (uint) { return 1; } // 1 block
 
     // @notice The duration of voting on a proposal, in blocks
-    function votingPeriod() public pure returns (uint) { return 500; } // ~3 days in blocks (assuming 15s blocks)
+    function votingPeriod() public pure returns (uint) { return 17280; } // ~3 days in blocks (assuming 15s blocks)
 
     // @notice The address of the VEMPIRE Protocol Timelock
     TimelockInterface public timelock;
