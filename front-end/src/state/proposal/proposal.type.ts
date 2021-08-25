@@ -1,0 +1,3 @@
+const PUBLISH_DATA = "PUBLISH_DATA"
+
+export default PUBLISH_DATA
