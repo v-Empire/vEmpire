@@ -1,22 +1,36 @@
-import React, { useState } from 'react'
-import { Heading, Checkbox, Radio, ButtonMenu, ButtonMenuItem, Button, useModal } from '@pancakeswap-libs/uikit'
+import React, { useCallback, useState } from 'react'
+import { Heading, Checkbox, Text, Radio, Button, useModal, Flex } from '@pancakeswap-libs/uikit'
 import FlexLayout from 'components/layout/Flex'
 import Page from 'components/layout/Page'
 import Divider from 'views/Farms/components/Divider'
+import { getLocalStore } from 'utils/localStorage'
 import useI18n from 'hooks/useI18n'
 import styled from 'styled-components'
+import LocalStores from 'config/LocalStores'
 import VoteTabButtons from '../VoteTabButtons'
 import ProposalTabButton from '../ProposalTabButton'
 import VoteNowModal from './VoteNowModal'
+import ProposalData from './ProposalData'
 
 const Row = styled('div')`
   margin: 30px 0px;
   padding: 0;
 `
 
+const Title = styled(Text)`
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.1;
+    color:#27262c !important;
+    cursor:pointer
+`
+const SubHeading = styled.div`
+  color:#ffffff;
+`
 const ProposalOverview = () => {
+  const proposalData = getLocalStore(LocalStores.PROPOSAL_DATA)
+  /* const proposalId = proposalData.map((item) => item.id) */
 
-  const [voteNow] = useModal(<VoteNowModal />)
 
   return (
 
@@ -36,20 +50,13 @@ const ProposalOverview = () => {
             Proposals
           </Heading>
           <Row>
-            <ProposalTabButton />
-          </Row>
-          <div>
-            <Radio name="voting" /* selected="true" */ scale="sm" style={{ marginRight: '10px' }} />
-            Vote Now
-            <Radio name="voting" scale="sm" style={{ margin: '0px 10px' }} />
-            Closed
-          </div>
-          <Row>
-            <Heading as="h1" size="lg" color="primary" style={{ marginBottom: '30px' }}>
-              Proposal 1...
-            </Heading>
-            <p style={{ marginBottom: '30px' }}>End Oct, 12th 2022 9:00PM</p>
-            <Button onClick={voteNow}>Vote Now</Button>
+
+            {proposalData ?
+              (proposalData.map((item) => {
+                return <ProposalData {...item} />
+              })
+              ) : 'No Proposal Count'}
+
           </Row>
         </div>
       </div>
@@ -59,13 +66,13 @@ const ProposalOverview = () => {
           <Heading as="h1" size="lg" color="primary" style={{ marginBottom: '30px' }}>
             Got a Suggestion?
           </Heading>
-          <p>Community Propsals are a great way to see how the community feels about your ideas.</p>
-          <p>
-            They wont neccessarily be implemented if the community votes successful, but suggestions with a lot of community support may be made into Core proposals.
-          </p>
+          <SubHeading>
+            <p >Community Propsals are a great way to see how the community feels about your ideas.</p>
+          </SubHeading>
+
         </div>
       </div>
-    </Page>
+    </Page >
   )
 }
 

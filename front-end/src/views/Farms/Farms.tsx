@@ -32,14 +32,15 @@ const Farms: React.FC<FarmsProps> = (farmsProps) => {
 
   const dispatch = useDispatch()
   const { fastRefresh } = useRefresh()
+
   useEffect(() => {
     if (account) {
-     
+
       dispatch(fetchFarmUserDataAsync(account))
     }
   }, [account, dispatch, fastRefresh])
 
-  const [stakedOnly, setStakedOnly] = useState(false)
+
 
   const activeFarms = farmsLP.filter((farm) => !!farm.isTokenOnly === !!tokenMode && farm.multiplier !== '0X')
   const inactiveFarms = farmsLP.filter((farm) => !!farm.isTokenOnly === !!tokenMode && farm.multiplier === '0X')
@@ -70,6 +71,7 @@ const Farms: React.FC<FarmsProps> = (farmsProps) => {
 
         return { ...farm, apy }
       })
+
       return farmsToDisplayWithAPY.map((farm) => (
         <FarmCard
           key={farm.pid}

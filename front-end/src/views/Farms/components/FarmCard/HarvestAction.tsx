@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import BigNumber from 'bignumber.js'
-import { getPendingVEMP } from 'utils/farmHarvest'
+import { getPendingVEMP, stake } from 'utils/farmHarvest'
 import { Button, Flex, Heading } from '@pancakeswap-libs/uikit'
 import useI18n from 'hooks/useI18n'
+import fetchFarms from 'state/farms/fetchFarms'
 import { useHarvest } from 'hooks/useHarvest'
 import { getBalanceNumber } from 'utils/formatBalance'
 import styled from 'styled-components'
@@ -26,6 +27,7 @@ const HarvestAction: React.FC<FarmCardActionsProps> = ({ earnings, pid }) => {
   const { onReward } = useHarvest(pid)
   const { onStake } = useStake(pid)
 
+
   // const rawEarningsBalance = getBalanceNumber(earnings)
   // const displayBalance = rawEarningsBalance.toLocaleString()
 
@@ -38,11 +40,11 @@ const HarvestAction: React.FC<FarmCardActionsProps> = ({ earnings, pid }) => {
           disabled={earnings === 0 || pendingTx}
           onClick={async () => {
             setPendingTx(true)
-            await onReward()
+            await stake(pid, 0)
             setPendingTx(false)
           }}
         >
-          {TranslateString(999, 'Harvest')}
+          {TranslateString(999, 'Loot')}
         </Button>
       </BalanceAndCompound>
     </Flex>

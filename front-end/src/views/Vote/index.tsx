@@ -33,5 +33,5 @@ const Votes :React.FC = () => {
 
 export default Votes
 const Divider = styled.div`
-border:1px solid #8a6a10;
+border:1px solid #27262c;
 `

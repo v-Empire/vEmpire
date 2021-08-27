@@ -20,7 +20,7 @@ export const getLocalStore = (storeName) => {
         if (data) {
             return JSON.parse(data);
         }
-        return data;
+        return [];
     } catch (error) {
         console.error(error);
         return null;

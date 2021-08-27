@@ -10,6 +10,7 @@ import { QuoteToken } from '../../config/constants/types'
 
 
 
+
 const fetchFarms = async () => {
 
   const data = await Promise.all(
@@ -25,12 +26,6 @@ const fetchFarms = async () => {
 
       return {
         ...farmConfig,
-        // tokenAmount: tokenAmount.toJSON(),
-        // quoteTokenAmount: quoteTokenAmount,
-        // lpTotalInQuoteToken: lpTotalInQuoteToken.toJSON(),
-        // tokenPriceVsQuote: tokenPriceVsQuote.toJSON(),
-        // poolWeight: poolWeight.toNumber(),
-        // multiplier: `${allocPoint.div(100).toString()}X`,
         multiplier: poolMultiplier,
         depositFeeBP: deposit,
         earnAmountFarm: earnAmount,

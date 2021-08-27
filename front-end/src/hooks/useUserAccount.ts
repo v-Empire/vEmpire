@@ -22,7 +22,6 @@ const useUserAccount = () => {
   }
 
   const login = async () => {
-    localStorage.setItem('accountStatus', '1')
     connect('injected')
   }
 

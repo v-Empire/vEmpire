@@ -27,6 +27,14 @@ const Wrapper = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 32px;
+  a{
+    border:1px solid #27262c;
+    background-color: #27262c;
+  }
+  a:hover,a:active{
+    border:1px solid #27262c;
+    background-color: #27262c !important;
+  }
 `
 
 const ToggleWrapper = styled.div`

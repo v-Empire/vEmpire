@@ -269,7 +269,6 @@ export const getAllowances = async (lpAddress) => {
                 lpPairAddress,
             );
             const allowanceResponse: any = await contract.methods.allowance(account, cheffAddress).call();
-            console.log(allowanceResponse, "allowanceResponse")
             return allowanceResponse
         }
         return ""

@@ -33,7 +33,7 @@ const CakeStats = () => {
   const marketCap = eggPrice.times(circSupply);
 
   let vikingPerBlock = 0;
-  if(farms && farms[0] && farms[0].vikingPerBlock){
+  if (farms && farms[0] && farms[0].vikingPerBlock) {
     vikingPerBlock = new BigNumber(farms[0].vikingPerBlock).div(new BigNumber(10).pow(18)).toNumber();
   }
 
@@ -50,14 +50,6 @@ const CakeStats = () => {
         <Row>
           <Text fontSize="14px">{TranslateString(999, 'Market Cap')}</Text>
           <CardValue fontSize="14px" value={getBalanceNumber(marketCap)} decimals={0} prefix="$" />
-        </Row>
-        <Row>
-          <Text fontSize="14px">{TranslateString(538, 'Total VIKING Burned')}</Text>
-          <CardValue fontSize="14px" value={getBalanceNumber(burnedBalance)} decimals={0} />
-        </Row>
-        <Row>
-          <Text fontSize="14px">{TranslateString(540, 'New EGG/block')}</Text>
-          <Text bold fontSize="14px">{vikingPerBlock}</Text>
         </Row>
       </CardBody>
     </StyledCakeStats>

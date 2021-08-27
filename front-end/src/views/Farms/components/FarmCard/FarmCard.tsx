@@ -92,6 +92,7 @@ interface FarmCardProps {
 }
 
 const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, bnbPrice, ethereum, account }) => {
+
   const TranslateString = useI18n()
 
   const [showExpandableSection, setShowExpandableSection] = useState(false)
@@ -150,7 +151,7 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, bnbPrice,
                   apy={farm.apy}
                 />
                 {/* {farmAPY}% */}
-                <p> 125% </p>
+                <p> 500% </p>
               </>
             ) : (
               <Skeleton height={24} width={80} />
@@ -163,7 +164,7 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, bnbPrice,
         <Text bold>VEMP</Text>
       </Flex>
       <Flex justifyContent='space-between'>
-        <Text style={{ fontSize: '24px' }}>{TranslateString(10001, 'MANA')}:</Text>
+        <Text style={{ fontSize: '24px' }}>{TranslateString(10001, 'VEMP')}:</Text>
         <Text bold style={{ margin: 'auto 0' }}>{depositFeeBP}MANA</Text>
       </Flex>
       <CardActionsContainer farm={farm} ethereum={ethereum} account={account} />
@@ -176,7 +177,7 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, bnbPrice,
         <DetailsSection
           removed={removed}
           isTokenOnly={farm.isTokenOnly}
-          bscScanAddress='https://kovan.etherscan.io/address/0x88744DDDAe7512F768Fdf59266f350ab7A81af8D'
+          bscScanAddress='https://kovan.etherscan.io/address/0x11bdfc90ecB75e3F3eDa03021F403beE740DE862'
           totalValueFormated={totalValueFormated}
           lpLabel={lpLabel}
           farm={farm}

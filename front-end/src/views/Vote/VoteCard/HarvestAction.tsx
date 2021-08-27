@@ -23,14 +23,11 @@ const BalanceAndCompound = styled.div`
 const HarvestAction: React.FC<FarmCardActionsProps> = ({ earnings, pid }) => {
   const TranslateString = useI18n()
   const [pendingTx, setPendingTx] = useState(false)
-  const { onReward } = useHarvest(pid)
-  const { onStake } = useStake(pid)
-  const [earningBalance, setEarningBalance] = React.useState<number>(0)
 
 
   return (
     <Flex mb='8px' justifyContent='space-between' alignItems='center'>
-      <Heading color={earnings === 0 ? 'textDisabled' : 'text'}>{earnings ? (earnings.toFixed(2)) : earnings}</Heading>
+      <Heading color={earnings === 0 ? 'textDisabled' : 'text'}>{earnings ? (earnings.toFixed(3)) : earnings}</Heading>
       <BalanceAndCompound>
 
         <Button
@@ -41,7 +38,7 @@ const HarvestAction: React.FC<FarmCardActionsProps> = ({ earnings, pid }) => {
             setPendingTx(false)
           }}
         >
-          {TranslateString(999, 'Harvest')}
+          {TranslateString(999, 'Loot')}
         </Button>
       </BalanceAndCompound>
     </Flex>

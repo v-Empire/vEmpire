@@ -5,7 +5,7 @@ const votes: VoteConfig[] = [
   {
     pid: 0,
     risk: 5,
-    lpSymbol: 'VEMP Stake',
+    lpSymbol: 'Stake into DDAO',
     lpAddresses: '0x3d8DAa0C319623Df0f80aaA832ecf539096E9dd0',
 
     tokenSymbol: 'VIKING',

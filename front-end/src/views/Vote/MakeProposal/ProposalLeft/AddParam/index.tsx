@@ -6,10 +6,16 @@ const Container = styled('div')`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  div button{
+    background-color: #27262c !important;
+  }
 `
 const Label = styled('label')`
   font-size: 20px;
   margin-bottom: 30px;
+`
+const ParamButton= styled(Button)`
+background-color: #27262c !important;
 `
 const Text = styled('input')`
   font-size: 20px;
@@ -73,12 +79,12 @@ const ProposalLeftComponent = ({ handleParamChange }) => {
       })}
       <Flex>
 
-        <Button style={{ alignSelf: 'center' }} onClick={() => handleAdd()}>
+        <ParamButton style={{ alignSelf: 'center' }} onClick={() => handleAdd()}>
           Add Param
-        </Button>
-        <Button style={{ alignSelf: 'center', marginLeft: '10px' }} onClick={(e) => handleRemove(e)}>
+        </ParamButton>
+        <ParamButton style={{ alignSelf: 'center', marginLeft: '10px' }} onClick={(e) => handleRemove(e)}>
           Remove Param
-        </Button>
+        </ParamButton>
       </Flex>
 
     </>

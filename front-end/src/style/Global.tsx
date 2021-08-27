@@ -12,9 +12,10 @@ const GlobalStyle = createGlobalStyle`
   * {
     font-family: 'Kanit', sans-serif;
   }
-  h2{
-      color:black !important;
-    }
+a,h1{
+  color:white !important;
+}
+
   body {
     background-color: ${({ theme }) => theme.colors.background};
 
@@ -27,6 +28,11 @@ const GlobalStyle = createGlobalStyle`
   input{
     margin-right:20px;
   }
+  button{
+    background-color: ${({ theme }) => theme.colors.background} !important;
+     border: 1px solid #27262c !important;
+     color:#ffffff !important;
+     }
   `
   // button{
   //   border-radius : 0px 20px 0 20px !important;

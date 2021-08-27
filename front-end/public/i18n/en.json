@@ -63,7 +63,7 @@
     {
       "data": {
         "stringId": 300,
-        "text": "Pending harvest"
+        "text": "Pending loot"
       }
     },
     {
@@ -75,7 +75,7 @@
     {
       "data": {
         "stringId": 304,
-        "text": "Total vEmpire burned since launch"
+        "text": "Total VEMP burned since launch"
       }
     },
     {
@@ -117,19 +117,19 @@
     {
       "data": {
         "stringId": 318,
-        "text": "Earn"
+        "text": "Stake for"
       }
     },
     {
       "data": {
         "stringId": 320,
-        "text": "Stake LP tokens to earn vEmpire"
+        "text": "Stake LP tokens to earn VEMP"
       }
     },
     {
       "data": {
         "stringId": 322,
-        "text": "Stake vEmpire, get SYRUP."
+        "text": "Stake VEMP, get SYRUP."
       }
     },
     {
@@ -153,7 +153,7 @@
     {
       "data": {
         "stringId": 334,
-        "text": "Every time you stake and unstake vEmpire tokens, the contract will automatically harvest vEmpire rewards for you!"
+        "text": "Every time you stake and unstake vEmpire tokens, the contract will automatically loot vEmpire rewards for you!"
       }
     },
     {
@@ -207,7 +207,7 @@
     {
       "data": {
         "stringId": 354,
-        "text": "Total Liquidity"
+        "text": "total staked in pool"
       }
     },
     {
@@ -645,19 +645,19 @@
     {
       "data": {
         "stringId": 534,
-        "text": "vEmpire Stats"
+        "text": "VEMP Stats"
       }
     },
     {
       "data": {
         "stringId": 536,
-        "text": "Total vEmpire Supply"
+        "text": "Total VEMP Supply"
       }
     },
     {
       "data": {
         "stringId": 538,
-        "text": "Total vEmpire Burned"
+        "text": "Total VEMP Burned"
       }
     },
     {
@@ -669,19 +669,19 @@
     {
       "data": {
         "stringId": 542,
-        "text": "Farms & Staking"
+        "text": "Metaverse Staking"
       }
     },
     {
       "data": {
         "stringId": 544,
-        "text": "vEmpire to Harvest"
+        "text": "VEMP to loot"
       }
     },
     {
       "data": {
         "stringId": 546,
-        "text": "vEmpire in Wallet"
+        "text": "VEMP in Wallet"
       }
     },
     {
@@ -753,13 +753,13 @@
     {
       "data": {
         "stringId": 576,
-        "text": "vEmpire Swap"
+        "text": "vEmpire"
       }
     },
     {
       "data": {
         "stringId": 578,
-        "text": "Yield farms for the warriors of Valhalla on BSC!"
+        "text": "Yield farms for the warriors of VEmpire on EtherScan!"
       }
     },
     {
@@ -795,7 +795,7 @@
     {
       "data": {
         "stringId": 590,
-        "text": "\u2b50\ufe0f Every time you stake and unstake LP tokens, the contract will automatically harvest vEmpire rewards for you!"
+        "text": "\u2b50\ufe0f Every time you stake and unstake LP tokens, the contract will automatically loot vEmpire rewards for you!"
       }
     },
     {
@@ -1215,7 +1215,13 @@
     {
       "data": {
         "stringId": 10001,
-        "text": "Deposit Fee"
+        "text": "MANA"
+      }
+    },
+    {
+      "data": {
+        "stringId": 10004,
+        "text": "VEMP"
       }
     },
     {

@@ -37,7 +37,6 @@ const CardActions: React.FC<FarmCardActionsProps> = ({ farm, ethereum }) => {
   const lpAddress = lpAddresses[process.env.REACT_APP_CHAIN_ID]
   const tokenAddress = tokenAddresses[process.env.REACT_APP_CHAIN_ID];
   const [approveAllowance, setApproveAllowance] = React.useState<number>(0)
-  const [failedAllowance, setFailedAllowance] = useState(false);
   const lpName = farm.lpSymbol.toUpperCase()
   const isApproved = approveAllowance > 1
 
@@ -47,7 +46,7 @@ const CardActions: React.FC<FarmCardActionsProps> = ({ farm, ethereum }) => {
       setApproveAllowance(isAllowance)
     }
     onAllowance()
-  }, [farm.lpAddresses])
+  }, [farm.lpAddresses, requestedApproval])
 
   const lpContract = useMemo(() => {
     if (isTokenOnly) {
@@ -81,8 +80,8 @@ const CardActions: React.FC<FarmCardActionsProps> = ({ farm, ethereum }) => {
   return (
     <Action>
       <Flex>
-        <Text bold textTransform="uppercase" color="secondary" fontSize="12px" pr="3px">
-          VEMP
+        <Text bold  color="secondary" fontSize="12px" pr="3px">
+          xVEMP
         </Text>
         <Text bold textTransform="uppercase" color="textSubtle" fontSize="12px">
           {TranslateString(999, 'Earned')}

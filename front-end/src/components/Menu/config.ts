@@ -8,7 +8,7 @@ const config: MenuEntry[] = [
   },
 
   {
-    label: 'Farms',
+    label: 'Worlds',
     icon: 'FarmIcon',
     href: '/farms',
   },
@@ -17,11 +17,7 @@ const config: MenuEntry[] = [
     icon: 'PoolIcon',
     href: '/vote',
   },
-  {
-    label: 'Info',
-    icon: 'InfoIcon',
-    href: '/farms',
-  },
+
 ]
 
 export default config

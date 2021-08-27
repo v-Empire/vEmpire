@@ -7,11 +7,10 @@ const { MoonIcon, SunIcon } = Icons;
 
 interface Props {
   isDark: boolean;
-  toggleTheme: (isDark: boolean) => void;
 }
 
-const ThemeSwitcher: React.FC<Props> = ({ isDark, toggleTheme }) => (
-  <Button variant="text" onClick={() => toggleTheme(!isDark)}>
+const ThemeSwitcher: React.FC<Props> = ({ isDark }) => (
+  <Button variant="text" >
     {/* alignItems center is a Safari fix */}
     <Flex alignItems="center">
       <SunIcon color={isDark ? "textDisabled" : "text"} width="24px" />

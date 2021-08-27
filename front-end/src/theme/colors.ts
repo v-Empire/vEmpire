@@ -2,7 +2,7 @@ import { Colors } from "./types";
 
 export const baseColors = {
   failure: "#ED4B9E",
-  primary: "#000000",
+  primary: /* "#000000" */"crimson",
   primaryBright: "#67500c",
   primaryDark: "#8f6e10",
   secondary: "#a56227",
@@ -55,7 +55,7 @@ export const darkColors: Colors = {
   dropdownDeep: "#100C18",
   inputSecondary: "#262130",
   disabled: "#524B63",
-  secondary: "#be7434",
+  secondary: "#ffffff",
   background: "#343135",
   backgroundDisabled: "#3c3742",
   contrast: "#FFFFFF",

@@ -2,17 +2,22 @@ import React from 'react'
 import { Button, Flex, Modal } from '@pancakeswap-libs/uikit'
 import { castVote } from 'utils/alphaGovernor'
 
-const VoteNowModal = () => {
+interface VoteNowModalProps {
+    proposalId?: any
+    onDismiss?:()=>void
+}   
+
+const VoteNowModal: React.FC<VoteNowModalProps> = ({ onDismiss,proposalId }) => {
     const handleFavour = async () => {
-        await castVote(1, true)
+        await castVote(proposalId, true)
     }
 
     const handleUnFavour = async () => {
-        await castVote(1, false)
+        await castVote(proposalId, false)
     }
 
     return (
-        <Modal title="Vote" >
+        <Modal title="Vote"  onDismiss={()=>{onDismiss()}}>
             <Flex>
                 <Button onClick={handleFavour} style={{ marginRight: '10px' }}>Favour</Button>
                 <Button onClick={handleUnFavour}>UnFavour</Button>

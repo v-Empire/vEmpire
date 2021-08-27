@@ -16,7 +16,7 @@ interface DepositModalProps {
   farm?: any
 }
 
-const DepositModal: React.FC<DepositModalProps> = ({ farm, max, onConfirm, onDismiss, tokenName = '', depositFeeBP = 0 }) => {
+const DepositModal: React.FC<DepositModalProps> = ({ farm, max, onConfirm, onDismiss, tokenName, depositFeeBP = 0 }) => {
   const [val, setVal] = useState('')
   const [userAccountBalance, setUserAccountBalance] = useState<number>(0);
   const [pendingTx, setPendingTx] = useState(false)

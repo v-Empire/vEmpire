@@ -13,6 +13,7 @@ export interface ExpandableSectionProps {
 }
 
 const Wrapper = styled(Flex)`
+background-color: #27262c !important;
   svg {
     margin-right: 0.25rem;
   }
@@ -20,6 +21,7 @@ const Wrapper = styled(Flex)`
 
 const MultiplierTag = styled(Tag)`
   margin-left: 4px;
+  background-color: #27262c !important;
 `
 
 const CardHeading: React.FC<ExpandableSectionProps> = ({

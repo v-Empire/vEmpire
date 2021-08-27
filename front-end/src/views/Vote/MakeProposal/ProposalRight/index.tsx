@@ -11,6 +11,7 @@ const Container = styled('div')`
 `
 const Label = styled('label')`
   font-size: 20px;
+  color:#ffffff;
   margin-bottom: 20px;
 `
 const Text = styled('input')`
@@ -20,6 +21,9 @@ const Text = styled('input')`
   border-radius: 5px;
   padding: 5px 0px;
   margin-bottom: 20px;
+`
+const PublishButton= styled(Button)`
+background-color: #27262c !important;
 `
 const Card = styled('div')`
   width: 100%;
@@ -33,33 +37,53 @@ const Row = styled('div')`
   justify-content: space-between;
 `
 interface ProposalProps {
-
   handleContract?: (e) => void
   handleEther?: (e) => void
   onPublish?: () => void
+  value?: any
 }
 
-const ProposalRight: React.FC<ProposalProps> = ({ handleContract, handleEther, onPublish }) => {
-  const [date, setDate] = useState(new Date());
+const ProposalRight: React.FC<ProposalProps> = ({ value, handleContract, handleEther, onPublish }) => {
+  const [pendingTx, setPendingTx] = useState(true)
+  // console.log(value);
+  const [date, setDate] = useState(new Date())
   const { account } = useUserAccount()
-  const accountEllipsis = account ? `${account.substring(0, 4)}...${account.substring(account.length - 4)}` : null;
+  const accountEllipsis = account ? `${account.substring(0, 4)}...${account.substring(account.length - 4)}` : null
+
+  // const checkParam = () =>{
+  //   const count = value.paramValue.length;
+  //   let flag = true; 
+  //   for(let i=0;i<count;i++){
+  //     if(value.paramValue[i].value === null){
+  //       flag = true
+  //     }else{
+  //       flag = false
+  //     }
+  //   }
+  //  return flag; 
+  // } 
+  useEffect(() => {
+    if (value.contract && value.ether && value.title && value.address && value.description && value.paramValue[0].value.length!==0) {
+      setPendingTx(false)
+    } else {
+      setPendingTx(true)
+    }
+  }, [value])
 
   // const handleChange = useCallback(
   //   (e: React.FormEvent<HTMLInputElement>) => {
   //     setVal(e.currentTarget.value)
+
   //   },
   //   [setVal],
   // )
-
 
   useEffect(() => {
     const timer = setInterval(() => setDate(new Date()), 1000)
     return function cleanup() {
       clearInterval(timer)
     }
-
-  });
-
+  })
 
   return (
     <Container>
@@ -71,13 +95,15 @@ const ProposalRight: React.FC<ProposalProps> = ({ handleContract, handleEther, o
       <Label>Start Time</Label>
       <ProposalInput value={date.toLocaleTimeString()} readonly="readOnly" />
       <Label>Ether Value</Label>
-      <ProposalInput onChange={(e) => handleEther(e.currentTarget.value)} />
+      <ProposalInput value={value.ether} onChange={(e) => handleEther(e.currentTarget.value)} />
       <Label>Contract Method</Label>
-      <ProposalInput onChange={(e) => handleContract(e.currentTarget.value)} />
+      <ProposalInput value={value.contract} onChange={(e) => handleContract(e.currentTarget.value)} />
       <Row>
         <Label>Creater :- {accountEllipsis}</Label>
       </Row>
-      <Button onClick={onPublish} style={{ alignSelf: 'center' }}>Publish</Button>
+      <PublishButton disabled={pendingTx} onClick={onPublish} style={{ alignSelf: 'center' }}>
+        Publish
+      </PublishButton>
     </Container>
   )
 }
