@@ -1,4 +1,4 @@
-pragma solidity ^0.6.12;
+pragma solidity =0.6.12;
 
 import "@openzeppelin/contracts/GSN/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -232,7 +232,7 @@ contract ERC20 is Context, IERC20 {
      * Requirements:
      *
      * - `sender` cannot be the zero address.
-     * - `recipient`0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 cannot be the zero address.
+     * - `recipient` cannot be the zero address.
      * - `sender` must have a balance of at least `amount`.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal virtual {

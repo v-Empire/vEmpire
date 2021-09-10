@@ -1,7 +1,7 @@
 // File: contracts/Timelock.sol
 //SPDX-License-Identifier: Unlicensed
 
-pragma solidity ^0.6.12;
+pragma solidity =0.6.12;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
@@ -30,6 +30,7 @@ contract Timelock {
     constructor(address admin_, uint delay_) public {
         require(delay_ >= MINIMUM_DELAY, "Timelock::constructor: Delay must exceed minimum delay.");
         require(delay_ <= MAXIMUM_DELAY, "Timelock::setDelay: Delay must not exceed maximum delay.");
+        require(admin_ != address(0), "Timelock::admin can not be 0 address");
 
         admin = admin_;
         delay = delay_;
@@ -58,6 +59,8 @@ contract Timelock {
 
     function setPendingAdmin(address pendingAdmin_) public {
         // allows one time setting of admin for deployment purposes
+        require(pendingAdmin_ != address(0), "Timelock::pendingAdmin can not be 0 address");
+
         if (admin_initialized) {
             require(msg.sender == address(this), "Timelock::setPendingAdmin: Call must come from Timelock.");
         } else {

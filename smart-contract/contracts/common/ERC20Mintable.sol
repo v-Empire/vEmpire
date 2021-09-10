@@ -1,4 +1,4 @@
-pragma solidity ^0.6.12;
+pragma solidity =0.6.12;
 
 import "@openzeppelin/contracts/GSN/Context.sol";
 import "./ERC20.sol";

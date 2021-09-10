@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: Unlicensed
 
-pragma solidity ^0.6.12;
+pragma solidity =0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "../interface/TimelockInterface.sol";
@@ -9,6 +9,9 @@ import "../interface/xVempInterface.sol";
 contract GovernorAlpha {
     // @notice The name of this contract
     string public constant name = "VEMPIRE Governor Alpha";
+
+    uint minTokensForVote = 75000 * (10**18);
+    uint minTokensForProposal = 75000 * (10**18);
 
     // @notice The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
     function quorumVotes() public pure returns (uint) { return 30; }
@@ -21,6 +24,12 @@ contract GovernorAlpha {
 
     // @notice The duration of voting on a proposal, in blocks
     function votingPeriod() public pure returns (uint) { return 17280; } // ~3 days in blocks (assuming 15s blocks)
+
+    // @notice Min xVEMP for voting
+    function minxVempForVote() public view returns (uint) { return minTokensForVote; } // ~75000 xVemp Tokens 
+
+    // @notice Min xVEMP for proposal
+    function minxVempForProposal() public view returns (uint) { return minTokensForProposal; } // ~75000 xVemp Tokens 
 
     // @notice The address of the VEMPIRE Protocol Timelock
     TimelockInterface public timelock;
@@ -130,13 +139,14 @@ contract GovernorAlpha {
     event ProposalExecuted(uint id);
 
     constructor(address timelock_, address xVemp_, address guardian_) public {
+        require(guardian_ != address(0), "GovernorAlpha::guardian can not be 0 address");
         timelock = TimelockInterface(timelock_);
         xVemp = xVempInterface(xVemp_);
         guardian = guardian_;
     }
 
     function propose(address[] memory targets, uint[] memory values, string[] memory signatures, bytes[] memory calldatas, string memory description) public returns (uint) {
-        require(xVemp.balanceOf(msg.sender) > 0, "GovernorAlpha::propose: must have atleast 1 xVEMP token to create proposal");
+        require(xVemp.balanceOf(msg.sender) > minxVempForProposal(), "GovernorAlpha::propose: must have proper xVEMP token to create proposal");
         require(targets.length == values.length && targets.length == signatures.length && targets.length == calldatas.length, "GovernorAlpha::propose: proposal function information arity mismatch");
         require(targets.length != 0, "GovernorAlpha::propose: must provide actions");
         require(targets.length <= proposalMaxOperations(), "GovernorAlpha::propose: too many actions");
@@ -265,7 +275,7 @@ contract GovernorAlpha {
         Proposal storage proposal = proposals[proposalId];
         Receipt storage receipt = proposal.receipts[voter];
         require(receipt.hasVoted == false, "GovernorAlpha::_castVote: voter already voted");
-        require(xVemp.balanceOf(msg.sender) > 0, "GovernorAlpha::propose: must have atleast 1 xVEMP token to cast vote");
+        require(xVemp.balanceOf(msg.sender) > minxVempForVote(), "GovernorAlpha::propose: must have proper xVEMP token to cast vote");
         
         uint96 voterVote = 1;
         if (support) {
@@ -284,6 +294,16 @@ contract GovernorAlpha {
     function __acceptAdmin() public {
         require(msg.sender == guardian, "GovernorAlpha::__acceptAdmin: sender must be gov guardian");
         timelock.acceptAdmin();
+    }
+
+    function setMinProposalValue(uint _minValue) public {
+        require(msg.sender == guardian, "GovernorAlpha::__acceptAdmin: sender must be gov guardian");
+        minTokensForProposal = _minValue;
+    }
+
+    function setMinVoteValue(uint _minValue) public {
+        require(msg.sender == guardian, "GovernorAlpha::__acceptAdmin: sender must be gov guardian");
+        minTokensForVote = _minValue;
     }
 
     function __abdicate() public {

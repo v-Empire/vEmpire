@@ -1,4 +1,4 @@
-pragma solidity ^0.6.12;
+pragma solidity =0.6.12;
 
 import "@openzeppelin/contracts/GSN/Context.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -44,8 +44,8 @@ contract MasterChefVemp is Ownable {
 
     // The xVEMP TOKEN!
     IERC20 public xVEMP;
-    // Dev address.
-    address public devaddr;
+    // admin address.
+    address public adminaddr;
     // Block number when bonus SUSHI period ends.
     uint256 public bonusEndBlock;
     // xVEMP tokens created per block.
@@ -68,13 +68,13 @@ contract MasterChefVemp is Ownable {
 
     constructor(
         IERC20 _xVEMP,
-        address _devaddr,
+        address _adminaddr,
         uint256 _xVEMPPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock
     ) public {
         xVEMP = _xVEMP;
-        devaddr = _devaddr;
+        adminaddr = _adminaddr;
         xVEMPPerBlock = _xVEMPPerBlock;
         bonusEndBlock = _bonusEndBlock;
         startBlock = _startBlock;
@@ -177,7 +177,7 @@ contract MasterChefVemp is Ownable {
         emit Deposit(msg.sender, _pid, _amount);
     }
     
-    // Withdraw LP tokens from MasterChef.
+        // Withdraw LP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
@@ -217,9 +217,9 @@ contract MasterChefVemp is Ownable {
         xVEMPPerBlock = _newRewardPerBlock;
     }
 
-    // Update dev address by the previous dev.
-    function dev(address _devaddr) public {
-        require(msg.sender == devaddr, "dev: wut?");
-        devaddr = _devaddr;
+    // Update admin address by the previous admin.
+    function admin(address _adminaddr) public {
+        require(msg.sender == adminaddr, "admin: wut?");
+        adminaddr = _adminaddr;
     }
 }

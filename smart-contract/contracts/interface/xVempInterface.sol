@@ -1,4 +1,4 @@
-pragma solidity ^0.6.12;
+pragma solidity =0.6.12;
 
 interface xVempInterface {
     function balanceOf(address account) external view returns (uint256);
