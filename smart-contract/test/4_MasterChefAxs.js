@@ -7,6 +7,7 @@ const { signTypedData } = require('eth-sig-util');
 const MAX_DEPLOYED_BYTECODE_SIZE = 24576;
 const MasterChefAxs = contract.fromArtifact('MasterChefAxs');
 const MockToken = contract.fromArtifact('MockToken');
+const MockSLP = contract.fromArtifact('MockSLP');
 
 const {
     encodeParameters
@@ -16,7 +17,7 @@ describe('MasterChefAxs', function () {
     const [ ownerAddress, userAddress1, userAddress2, userAddress3, userAddress4 ] = accounts;
     beforeEach(async function () {
         this.vemp = await MockToken.new("VEMP", "VEMP", {from: ownerAddress, gas: 8000000});
-        this.slp = await MockToken.new("SLP", "SLP", {from: ownerAddress, gas: 8000000});
+        this.slp = await MockSLP.new("SLP", "SLP", {from: ownerAddress, gas: 8000000});
         this.lp = await MockToken.new("AXS", "AXS", {from: ownerAddress, gas: 8000000});
         this.chef = await MasterChefAxs.new(this.vemp.address, this.slp.address, ownerAddress, "1000", "4500", {from: ownerAddress, gas: 8000000});
         await this.vemp.mint(ownerAddress, "1000000000000000000000000");

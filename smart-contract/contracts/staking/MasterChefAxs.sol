@@ -184,9 +184,9 @@ contract MasterChefAxs is Ownable {
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 rewardBalance = pool.slpToken.balanceOf(address(this));
             uint256 _totalReward = rewardBalance.sub(pool.lastSLPRewardBalance);
-            accSLPPerShare = accSLPPerShare.add(_totalReward.mul(1e12).div(lpSupply));
+            accSLPPerShare = accSLPPerShare.add(_totalReward.mul(1e30).div(lpSupply));
         }
-        return user.amount.mul(accSLPPerShare).div(1e12).sub(user.rewardSLPDebt);
+        return user.amount.mul(accSLPPerShare).div(1e30).sub(user.rewardSLPDebt);
     }
 
     // Update reward vairables for all pools. Be careful of gas spending!
@@ -244,7 +244,7 @@ contract MasterChefAxs is Ownable {
 
         //// SLP
         uint256 rewardSLP = _totalRewardSLP.sub(pool.lastTotalSLPReward);
-        pool.accSLPPerShare = pool.accSLPPerShare.add(rewardSLP.mul(1e12).div(lpSupply));
+        pool.accSLPPerShare = pool.accSLPPerShare.add(rewardSLP.mul(1e30).div(lpSupply));
         pool.lastTotalSLPReward = _totalRewardSLP;
     }
 
@@ -262,7 +262,7 @@ contract MasterChefAxs is Ownable {
             pool.lastAXSRewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalAXSStaked.sub(totalAXSUsedForPurchase));
 
             //// SLP
-            uint256 sLPReward = user.amount.mul(pool.accSLPPerShare).div(1e12).sub(user.rewardSLPDebt);
+            uint256 sLPReward = user.amount.mul(pool.accSLPPerShare).div(1e30).sub(user.rewardSLPDebt);
             pool.slpToken.safeTransfer(msg.sender, sLPReward);
             pool.lastSLPRewardBalance = pool.slpToken.balanceOf(address(this));
         }
@@ -271,7 +271,7 @@ contract MasterChefAxs is Ownable {
         user.amount = user.amount.add(_amount);
         user.rewardDebt = user.amount.mul(pool.accVEMPPerShare).div(1e12);
         user.rewardAXSDebt = user.amount.mul(pool.accAXSPerShare).div(1e12);
-        user.rewardSLPDebt = user.amount.mul(pool.accSLPPerShare).div(1e12);
+        user.rewardSLPDebt = user.amount.mul(pool.accSLPPerShare).div(1e30);
         emit Deposit(msg.sender, _pid, _amount);
     }
     
@@ -294,11 +294,11 @@ contract MasterChefAxs is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
         
-        uint256 SLPReward = user.amount.mul(pool.accSLPPerShare).div(1e12).sub(user.rewardSLPDebt);
+        uint256 SLPReward = user.amount.mul(pool.accSLPPerShare).div(1e30).sub(user.rewardSLPDebt);
         pool.slpToken.safeTransfer(msg.sender, SLPReward);
         pool.lastSLPRewardBalance = pool.slpToken.balanceOf(address(this));
         
-        user.rewardSLPDebt = user.amount.mul(pool.accSLPPerShare).div(1e12);
+        user.rewardSLPDebt = user.amount.mul(pool.accSLPPerShare).div(1e30);
     }
 
     // Safe VEMP transfer function, just in case if rounding error causes pool to not have enough VEMPs.
