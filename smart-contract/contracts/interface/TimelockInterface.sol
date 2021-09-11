@@ -1,4 +1,4 @@
-pragma solidity ^0.6.12;
+pragma solidity =0.6.12;
 
 interface TimelockInterface {
     function delay() external view returns (uint);

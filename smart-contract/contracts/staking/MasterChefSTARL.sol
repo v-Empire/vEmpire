@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 // distributed and the community can show to govern itself.
 //
 // Have fun reading it. Hopefully it's bug-free. God bless.
-contract MasterChefMana is Ownable {
+contract MasterChefSTARL is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -22,7 +22,7 @@ contract MasterChefMana is Ownable {
     struct UserInfo {
         uint256 amount;     // How many LP tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
-        uint256 rewardMANADebt; // Reward debt in MANA.
+        uint256 rewardSTARLDebt; // Reward debt in STARL.
         //
         // We do some fancy math here. Basically, any point in time, the amount of VEMPs
         // entitled to a user but is pending to be distributed is:
@@ -42,10 +42,10 @@ contract MasterChefMana is Ownable {
         uint256 allocPoint;       // How many allocation points assigned to this pool. VEMPs to distribute per block.
         uint256 lastRewardBlock;  // Last block number that VEMPs distribution occurs.
         uint256 accVEMPPerShare; // Accumulated VEMPs per share, times 1e12. See below.
-        uint256 accMANAPerShare; // Accumulated MANAs per share, times 1e12. See below.
-        uint256 lastTotalMANAReward; // last total rewards
-        uint256 lastMANARewardBalance; // last MANA rewards tokens
-        uint256 totalMANAReward; // total MANA rewards tokens
+        uint256 accSTARLPerShare; // Accumulated STARLs per share, times 1e12. See below.
+        uint256 lastTotalSTARLReward; // last total rewards
+        uint256 lastSTARLRewardBalance; // last STARL rewards tokens
+        uint256 totalSTARLReward; // total STARL rewards tokens
     }
 
     // The VEMP TOKEN!
@@ -65,10 +65,10 @@ contract MasterChefMana is Ownable {
     uint256 public totalAllocPoint = 0;
     // The block number when VEMP mining starts.
     uint256 public startBlock;
-    // total MANA staked
-    uint256 public totalMANAStaked;
-    // total MANA used for purchase land
-    uint256 public totalManaUsedForPurchase = 0;
+    // total STARL staked
+    uint256 public totalSTARLStaked;
+    // total STARL used for purchase land
+    uint256 public totalSTARLUsedForPurchase = 0;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -103,10 +103,10 @@ contract MasterChefMana is Ownable {
             allocPoint: _allocPoint,
             lastRewardBlock: lastRewardBlock,
             accVEMPPerShare: 0,
-            accMANAPerShare: 0,
-            lastTotalMANAReward: 0,
-            lastMANARewardBalance: 0,
-            totalMANAReward: 0
+            accSTARLPerShare: 0,
+            lastTotalSTARLReward: 0,
+            lastSTARLRewardBalance: 0,
+            totalSTARLReward: 0
         }));
     }
 
@@ -133,7 +133,7 @@ contract MasterChefMana is Ownable {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accVEMPPerShare = pool.accVEMPPerShare;
-        uint256 lpSupply = totalMANAStaked;
+        uint256 lpSupply = totalSTARLStaked;
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
             uint256 VEMPReward = multiplier.mul(VEMPPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
@@ -142,18 +142,18 @@ contract MasterChefMana is Ownable {
         return user.amount.mul(accVEMPPerShare).div(1e12).sub(user.rewardDebt);
     }
     
-    // View function to see pending MANAs on frontend.
-    function pendingMANA(uint256 _pid, address _user) external view returns (uint256) {
+    // View function to see pending STARLs on frontend.
+    function pendingSTARL(uint256 _pid, address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
-        uint256 accMANAPerShare = pool.accMANAPerShare;
-        uint256 lpSupply = totalMANAStaked;
+        uint256 accSTARLPerShare = pool.accSTARLPerShare;
+        uint256 lpSupply = totalSTARLStaked;
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
-            uint256 rewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalMANAStaked.sub(totalManaUsedForPurchase));
-            uint256 _totalReward = rewardBalance.sub(pool.lastMANARewardBalance);
-            accMANAPerShare = accMANAPerShare.add(_totalReward.mul(1e12).div(lpSupply));
+            uint256 rewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalSTARLStaked.sub(totalSTARLUsedForPurchase));
+            uint256 _totalReward = rewardBalance.sub(pool.lastSTARLRewardBalance);
+            accSTARLPerShare = accSTARLPerShare.add(_totalReward.mul(1e12).div(lpSupply));
         }
-        return user.amount.mul(accMANAPerShare).div(1e12).sub(user.rewardMANADebt);
+        return user.amount.mul(accSTARLPerShare).div(1e12).sub(user.rewardSTARLDebt);
     }
 
     // Update reward vairables for all pools. Be careful of gas spending!
@@ -172,19 +172,19 @@ contract MasterChefMana is Ownable {
         if (block.number <= pool.lastRewardBlock) {
             return;
         }
-        uint256 rewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalMANAStaked.sub(totalManaUsedForPurchase));
-        uint256 _totalReward = pool.totalMANAReward.add(rewardBalance.sub(pool.lastMANARewardBalance));
-        pool.lastMANARewardBalance = rewardBalance;
-        pool.totalMANAReward = _totalReward;
+        uint256 rewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalSTARLStaked.sub(totalSTARLUsedForPurchase));
+        uint256 _totalReward = pool.totalSTARLReward.add(rewardBalance.sub(pool.lastSTARLRewardBalance));
+        pool.lastSTARLRewardBalance = rewardBalance;
+        pool.totalSTARLReward = _totalReward;
         
-        uint256 lpSupply = totalMANAStaked;
+        uint256 lpSupply = totalSTARLStaked;
         if (lpSupply == 0) {
             pool.lastRewardBlock = block.number;
-            pool.accMANAPerShare = 0;
-            pool.lastTotalMANAReward = 0;
-            user.rewardMANADebt = 0;
-            pool.lastMANARewardBalance = 0;
-            pool.totalMANAReward = 0;
+            pool.accSTARLPerShare = 0;
+            pool.lastTotalSTARLReward = 0;
+            user.rewardSTARLDebt = 0;
+            pool.lastSTARLRewardBalance = 0;
+            pool.totalSTARLReward = 0;
             return;
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
@@ -192,9 +192,9 @@ contract MasterChefMana is Ownable {
         pool.accVEMPPerShare = pool.accVEMPPerShare.add(VEMPReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
         
-        uint256 reward = _totalReward.sub(pool.lastTotalMANAReward);
-        pool.accMANAPerShare = pool.accMANAPerShare.add(reward.mul(1e12).div(lpSupply));
-        pool.lastTotalMANAReward = _totalReward;
+        uint256 reward = _totalReward.sub(pool.lastTotalSTARLReward);
+        pool.accSTARLPerShare = pool.accSTARLPerShare.add(reward.mul(1e12).div(lpSupply));
+        pool.lastTotalSTARLReward = _totalReward;
     }
 
     // Deposit LP tokens to MasterChef for VEMP allocation.
@@ -206,29 +206,29 @@ contract MasterChefMana is Ownable {
             uint256 pending = user.amount.mul(pool.accVEMPPerShare).div(1e12).sub(user.rewardDebt);
             safeVEMPTransfer(msg.sender, pending);
             
-            uint256 manaReward = user.amount.mul(pool.accMANAPerShare).div(1e12).sub(user.rewardMANADebt);
-            pool.lpToken.safeTransfer(msg.sender, manaReward);
-            pool.lastMANARewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalMANAStaked.sub(totalManaUsedForPurchase));
+            uint256 STARLReward = user.amount.mul(pool.accSTARLPerShare).div(1e12).sub(user.rewardSTARLDebt);
+            pool.lpToken.safeTransfer(msg.sender, STARLReward);
+            pool.lastSTARLRewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalSTARLStaked.sub(totalSTARLUsedForPurchase));
         }
         pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
-        totalMANAStaked = totalMANAStaked.add(_amount);
+        totalSTARLStaked = totalSTARLStaked.add(_amount);
         user.amount = user.amount.add(_amount);
         user.rewardDebt = user.amount.mul(pool.accVEMPPerShare).div(1e12);
-        user.rewardMANADebt = user.amount.mul(pool.accMANAPerShare).div(1e12);
+        user.rewardSTARLDebt = user.amount.mul(pool.accSTARLPerShare).div(1e12);
         emit Deposit(msg.sender, _pid, _amount);
     }
     
-    // Earn MANA tokens to MasterChef.
-    function claimMANA(uint256 _pid) public {
+    // Earn STARL tokens to MasterChef.
+    function claimSTARL(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
         
-        uint256 manaReward = user.amount.mul(pool.accMANAPerShare).div(1e12).sub(user.rewardMANADebt);
-        pool.lpToken.safeTransfer(msg.sender, manaReward);
-        pool.lastMANARewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalMANAStaked.sub(totalManaUsedForPurchase));
+        uint256 STARLReward = user.amount.mul(pool.accSTARLPerShare).div(1e12).sub(user.rewardSTARLDebt);
+        pool.lpToken.safeTransfer(msg.sender, STARLReward);
+        pool.lastSTARLRewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalSTARLStaked.sub(totalSTARLUsedForPurchase));
         
-        user.rewardMANADebt = user.amount.mul(pool.accMANAPerShare).div(1e12);
+        user.rewardSTARLDebt = user.amount.mul(pool.accSTARLPerShare).div(1e12);
     }
 
     // Safe VEMP transfer function, just in case if rounding error causes pool to not have enough VEMPs.
@@ -241,18 +241,18 @@ contract MasterChefMana is Ownable {
         }
     }
     
-    // Safe MANA transfer function to admin.
-    function accessMANATokens(uint256 _pid, address _to, uint256 _amount) public {
+    // Safe STARL transfer function to admin.
+    function accessSTARLTokens(uint256 _pid, address _to, uint256 _amount) public {
         require(msg.sender == adminaddr, "sender must be admin address");
-        require(totalMANAStaked.sub(totalManaUsedForPurchase) >= _amount, "Amount must be less than staked MANA amount");
+        require(totalSTARLStaked.sub(totalSTARLUsedForPurchase) >= _amount, "Amount must be less than staked STARL amount");
         PoolInfo storage pool = poolInfo[_pid];
-        uint256 ManaBal = pool.lpToken.balanceOf(address(this));
-        if (_amount > ManaBal) {
-            pool.lpToken.transfer(_to, ManaBal);
-            totalManaUsedForPurchase = totalManaUsedForPurchase.add(ManaBal);
+        uint256 STARLBal = pool.lpToken.balanceOf(address(this));
+        if (_amount > STARLBal) {
+            pool.lpToken.transfer(_to, STARLBal);
+            totalSTARLUsedForPurchase = totalSTARLUsedForPurchase.add(STARLBal);
         } else {
             pool.lpToken.transfer(_to, _amount);
-            totalManaUsedForPurchase = totalManaUsedForPurchase.add(_amount);
+            totalSTARLUsedForPurchase = totalSTARLUsedForPurchase.add(_amount);
         }
     }
     
