@@ -10,8 +10,8 @@ contract GovernorAlpha {
     // @notice The name of this contract
     string public constant name = "VEMPIRE Governor Alpha";
 
-    uint minTokensForVote = 75000 * (10**18);
-    uint minTokensForProposal = 75000 * (10**18);
+    uint private minTokensForVote = 75000 * (10**18);
+    uint private minTokensForProposal = 75000 * (10**18);
 
     // @notice The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
     function quorumVotes() public pure returns (uint) { return 30; }
@@ -140,6 +140,9 @@ contract GovernorAlpha {
 
     constructor(address timelock_, address xVemp_, address guardian_) public {
         require(guardian_ != address(0), "GovernorAlpha::guardian can not be 0 address");
+        require(xVemp_ != address(0), "GovernorAlpha::xVemp can not be 0 address");
+        require(timelock_ != address(0), "GovernorAlpha::timelock can not be 0 address");
+
         timelock = TimelockInterface(timelock_);
         xVemp = xVempInterface(xVemp_);
         guardian = guardian_;
