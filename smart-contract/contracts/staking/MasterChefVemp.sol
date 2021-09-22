@@ -209,9 +209,9 @@ contract MasterChefVemp is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
         xVEMP.burnFrom(address(msg.sender), user.amount);
         safeVEMPTransfer(_pid, address(msg.sender), user.amount);
+        totalVempStaked = totalVempStaked.sub(user.amount);
         user.amount = 0;
         user.rewardDebt = 0;
-        totalVempStaked = totalVempStaked.sub(user.amount);
         emit EmergencyWithdraw(msg.sender, _pid, user.amount);
     }
     
