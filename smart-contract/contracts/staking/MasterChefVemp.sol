@@ -61,6 +61,8 @@ contract MasterChefVemp is Ownable {
     uint256 public totalAllocPoint = 0;
     // The block number when xVEMP mining starts.
     uint256 public startBlock;
+    // Total VEMP Staked
+    uint256 public totalVempStaked;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -127,9 +129,13 @@ contract MasterChefVemp is Ownable {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accxVEMPPerShare = pool.accxVEMPPerShare;
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
-        if (block.number > pool.lastRewardBlock && lpSupply != 0) {
-            uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
+        uint256 PoolEndBlock =  block.number;
+        if(block.number > bonusEndBlock){
+            PoolEndBlock = bonusEndBlock;
+        }
+        uint256 lpSupply = totalVempStaked;
+        if (PoolEndBlock > pool.lastRewardBlock && lpSupply != 0) {
+            uint256 multiplier = getMultiplier(pool.lastRewardBlock, PoolEndBlock);
             uint256 xVEMPReward = multiplier.mul(xVEMPPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
             accxVEMPPerShare = accxVEMPPerShare.add(xVEMPReward.mul(1e12).div(lpSupply));
         }
@@ -150,16 +156,19 @@ contract MasterChefVemp is Ownable {
         if (block.number <= pool.lastRewardBlock) {
             return;
         }
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
+        uint256 lpSupply = totalVempStaked;
         if (lpSupply == 0) {
             pool.lastRewardBlock = block.number;
             return;
         }
-        uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
+        uint256 PoolEndBlock =  block.number;
+        if(block.number > bonusEndBlock){
+            PoolEndBlock = bonusEndBlock;
+        }
+        uint256 multiplier = getMultiplier(pool.lastRewardBlock, PoolEndBlock);
         uint256 xVEMPReward = multiplier.mul(xVEMPPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        xVEMP.mint(address(this), xVEMPReward);
         pool.accxVEMPPerShare = pool.accxVEMPPerShare.add(xVEMPReward.mul(1e12).div(lpSupply));
-        pool.lastRewardBlock = block.number;
+        pool.lastRewardBlock = PoolEndBlock;
     }
 
     // Deposit LP tokens to MasterChef for xVEMP allocation.
@@ -169,45 +178,60 @@ contract MasterChefVemp is Ownable {
         updatePool(_pid);
         if (user.amount > 0) {
             uint256 pending = user.amount.mul(pool.accxVEMPPerShare).div(1e12).sub(user.rewardDebt);
-            safexVEMPTransfer(msg.sender, pending);
+            safeVEMPTransfer(_pid, address(msg.sender), pending);
         }
         pool.lpToken.transferFrom(address(msg.sender), address(this), _amount);
+        xVEMP.mint(address(msg.sender), _amount);
         user.amount = user.amount.add(_amount);
         user.rewardDebt = user.amount.mul(pool.accxVEMPPerShare).div(1e12);
+        totalVempStaked = totalVempStaked.add(_amount);
         emit Deposit(msg.sender, _pid, _amount);
     }
     
-        // Withdraw LP tokens from MasterChef.
+    // Withdraw LP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool(_pid);
         uint256 pending = user.amount.mul(pool.accxVEMPPerShare).div(1e12).sub(user.rewardDebt);
-        safexVEMPTransfer(msg.sender, pending);
+        safeVEMPTransfer(_pid, address(msg.sender), pending);
         user.amount = user.amount.sub(_amount);
         user.rewardDebt = user.amount.mul(pool.accxVEMPPerShare).div(1e12);
-        pool.lpToken.transfer(address(msg.sender), _amount);
+        totalVempStaked = totalVempStaked.sub(_amount);
+        xVEMP.burnFrom(address(msg.sender), _amount);
+        safeVEMPTransfer(_pid, address(msg.sender), _amount);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) public {
-        PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        pool.lpToken.transfer(address(msg.sender), user.amount);
-        emit EmergencyWithdraw(msg.sender, _pid, user.amount);
+        xVEMP.burnFrom(address(msg.sender), user.amount);
+        safeVEMPTransfer(_pid, address(msg.sender), user.amount);
+        totalVempStaked = totalVempStaked.sub(user.amount);
         user.amount = 0;
         user.rewardDebt = 0;
+        emit EmergencyWithdraw(msg.sender, _pid, user.amount);
     }
-
-    // Safe xVEMP transfer function, just in case if rounding error causes pool to not have enough xVEMPs.
-    function safexVEMPTransfer(address _to, uint256 _amount) internal {
-        uint256 xVEMPBal = xVEMP.balanceOf(address(this));
-        if (_amount > xVEMPBal) {
-            xVEMP.transfer(_to, xVEMPBal);
+    
+    // Safe MANA transfer function to admin.
+    function emergencyWithdrawRewardTokens(uint256 _pid, address _to, uint256 _amount) public {
+        require(msg.sender == adminaddr, "sender must be admin address");
+        PoolInfo storage pool = poolInfo[_pid];
+        uint256 vempBal = pool.lpToken.balanceOf(address(this));
+        require(vempBal.sub(totalVempStaked) > _amount, "Insufficiently reward amount");
+        safeVEMPTransfer(_pid, _to, _amount);
+    }
+    
+    // Safe VEMP transfer function, just in case if rounding error causes pool to not have enough xVEMPs.
+    function safeVEMPTransfer(uint256 _pid, address _to, uint256 _amount) internal {
+        PoolInfo storage pool = poolInfo[_pid];
+        uint256 VEMPBal = pool.lpToken.balanceOf(address(this)).sub(totalVempStaked);
+        if (_amount > VEMPBal) {
+            pool.lpToken.transfer(_to, VEMPBal);
         } else {
-            xVEMP.transfer(_to, _amount);
+            pool.lpToken.transfer(_to, _amount);
         }
     }
     
