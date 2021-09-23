@@ -309,6 +309,11 @@ contract GovernorAlpha {
         minTokensForVote = _minValue;
     }
 
+    function updateGuardian(address _guardian) public {
+        require(msg.sender == guardian, "GovernorAlpha:: sender must be gov guardian");
+        guardian = _guardian;
+    }
+
     function __abdicate() public {
         require(msg.sender == guardian, "GovernorAlpha::__abdicate: sender must be gov guardian");
         guardian = address(0);
