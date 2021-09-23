@@ -200,15 +200,16 @@ contract MasterChefVemp is Ownable {
         user.rewardDebt = user.amount.mul(pool.accxVEMPPerShare).div(1e12);
         totalVempStaked = totalVempStaked.sub(_amount);
         xVEMP.burnFrom(address(msg.sender), _amount);
-        safeVEMPTransfer(_pid, address(msg.sender), _amount);
+        pool.lpToken.transfer(address(msg.sender), _amount);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) public {
+        PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         xVEMP.burnFrom(address(msg.sender), user.amount);
-        safeVEMPTransfer(_pid, address(msg.sender), user.amount);
+        pool.lpToken.transfer(address(msg.sender), user.amount);
         totalVempStaked = totalVempStaked.sub(user.amount);
         user.amount = 0;
         user.rewardDebt = 0;
@@ -220,15 +221,14 @@ contract MasterChefVemp is Ownable {
         require(msg.sender == adminaddr, "sender must be admin address");
         PoolInfo storage pool = poolInfo[_pid];
         uint256 vempBal = pool.lpToken.balanceOf(address(this));
-        require(vempBal.sub(totalVempStaked) >= _amount, "Insufficiently reward amount");
+        require(vempBal.sub(totalVempStaked) > _amount, "Insufficiently reward amount");
         safeVEMPTransfer(_pid, _to, _amount);
     }
     
     // Safe VEMP transfer function, just in case if rounding error causes pool to not have enough xVEMPs.
     function safeVEMPTransfer(uint256 _pid, address _to, uint256 _amount) internal {
         PoolInfo storage pool = poolInfo[_pid];
-        uint256 VEMPBal = pool.lpToken.balanceOf(address(this));
-        require(VEMPBal >= _amount, "Not enough amount");
+        uint256 VEMPBal = pool.lpToken.balanceOf(address(this)).sub(totalVempStaked);
         if (_amount > VEMPBal) {
             pool.lpToken.transfer(_to, VEMPBal);
         } else {
