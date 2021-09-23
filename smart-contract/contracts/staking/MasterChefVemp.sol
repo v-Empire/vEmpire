@@ -220,14 +220,15 @@ contract MasterChefVemp is Ownable {
         require(msg.sender == adminaddr, "sender must be admin address");
         PoolInfo storage pool = poolInfo[_pid];
         uint256 vempBal = pool.lpToken.balanceOf(address(this));
-        require(vempBal.sub(totalVempStaked) > _amount, "Insufficiently reward amount");
+        require(vempBal.sub(totalVempStaked) >= _amount, "Insufficiently reward amount");
         safeVEMPTransfer(_pid, _to, _amount);
     }
     
     // Safe VEMP transfer function, just in case if rounding error causes pool to not have enough xVEMPs.
     function safeVEMPTransfer(uint256 _pid, address _to, uint256 _amount) internal {
         PoolInfo storage pool = poolInfo[_pid];
-        uint256 VEMPBal = pool.lpToken.balanceOf(address(this)).sub(totalVempStaked);
+        uint256 VEMPBal = pool.lpToken.balanceOf(address(this));
+        require(VEMPBal >= _amount, "Not enough amount");
         if (_amount > VEMPBal) {
             pool.lpToken.transfer(_to, VEMPBal);
         } else {
