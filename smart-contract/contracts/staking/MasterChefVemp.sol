@@ -200,15 +200,16 @@ contract MasterChefVemp is Ownable {
         user.rewardDebt = user.amount.mul(pool.accxVEMPPerShare).div(1e12);
         totalVempStaked = totalVempStaked.sub(_amount);
         xVEMP.burnFrom(address(msg.sender), _amount);
-        safeVEMPTransfer(_pid, address(msg.sender), _amount);
+        pool.lpToken.transfer(address(msg.sender), _amount);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) public {
+        PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         xVEMP.burnFrom(address(msg.sender), user.amount);
-        safeVEMPTransfer(_pid, address(msg.sender), user.amount);
+        pool.lpToken.transfer(address(msg.sender), user.amount);
         totalVempStaked = totalVempStaked.sub(user.amount);
         user.amount = 0;
         user.rewardDebt = 0;
