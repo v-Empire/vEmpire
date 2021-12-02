@@ -205,7 +205,7 @@ contract vEmpireGame is Ownable {
         UserInfo storage user = userInfo[_roomId][msg.sender];
 
         require(
-            battle.player1 != address(0) && battle.player2 != address(0),
+            battle.player1 != address(0) || battle.player2 != address(0),
             "Invalid players address"
         );
         require(battle.winnerAddress != address(0), "Battle result in pending");
