@@ -43,6 +43,9 @@ contract vEmpireGame is Ownable {
     // Battle contract address
     address public battleAddress;
 
+    // DDAO contract address
+    address public ddaoAddress;
+
     // ddao ddaoPercent
     uint256 public daoPercent;
 
@@ -66,15 +69,17 @@ contract vEmpireGame is Ownable {
 
     mapping(string => address) public loser;
 
-    function initialize(address owner_, address _xsVemp, address _battleAddress, uint256 _ddaoPercent) public initializer {        
+    function initialize(address owner_, address _xsVemp, address _battleAddress, uint256 _ddaoPercent, address _ddaoAddress) public initializer {        
         require(_xsVemp != address(0), "Invalid _xsVemp address");
         require(_battleAddress != address(0), "Invalid _battleAddress address");
         require(owner_ != address(0), "Invalid owner_ address");
+        require(_ddaoAddress != address(0), "Invalid _ddaoAddress address");
 
         Ownable.init(owner_);
         xsVemp = _xsVemp;
         daoPercent = _ddaoPercent;
         battleAddress = _battleAddress;
+        ddaoAddress = _ddaoAddress;
     }
 
     modifier onlyAdmin() {
@@ -227,17 +232,15 @@ contract vEmpireGame is Ownable {
     /**
      * @dev Used only by admin or owner, used to withdraw ddao xsVemp tokens
      *
-     * @param _to address of xsVemp tokens receiver
      * @param _amount amount of xsVemp and must be less than total ddao amount
      */
-    function withdrawxsVempFeeTokensToVemp(address _to, uint256 _amount)
+    function withdrawxsVempFeeTokensToVemp(uint256 _amount)
         public
         onlyOwner
     {
-        require(_to != address(0), "Invalid to address");
         require(daoTokens >= _amount, "Insufficiently amount");
         IERC20(xsVemp).approve(address(battleAddress), _amount);
-        Battle(battleAddress).leave(_to, _amount);
+        Battle(battleAddress).leave(ddaoAddress, _amount);
         daoTokens = daoTokens.sub(_amount);
     }
 
@@ -295,6 +298,16 @@ contract vEmpireGame is Ownable {
     function updateBattleAddress(address _battleAddress) public onlyOwner {
         require(_battleAddress != address(0), "Invalid _battleAddress address");
         battleAddress = _battleAddress;
+    }
+
+    /**
+     * @dev Used only by admin or owner, used to dao contract, by default its 0 address
+     *
+     * @param _ddaoAddress dao contract address to 
+     */
+    function updateDDAOAddress(address _ddaoAddress) public onlyOwner {
+        require(_ddaoAddress != address(0), "Invalid _ddaoAddress address");
+        ddaoAddress = _ddaoAddress;
     }
 
     /**
