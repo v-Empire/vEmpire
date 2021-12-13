@@ -9,11 +9,11 @@ const Game = contract.fromArtifact('vEmpireGame');
 const MockToken = contract.fromArtifact('MockToken');
 
 describe('Game', function () {
-    const [ ownerAddress, userAddress1, userAddress2, userAddress3, userAddress4, userAddress5, userAddress6 ] = accounts;
+    const [ ownerAddress, userAddress1, userAddress2, userAddress3, userAddress4, userAddress5, userAddress6, userAddress7 ] = accounts;
     beforeEach(async function () {
         this.xsVemp = await MockToken.new("xsVEMP", "xsVEMP", {from: ownerAddress, gas: 8000000});
         this.game = await Game.new({from: ownerAddress, gas: 8000000});
-        await this.game.initialize(ownerAddress, this.xsVemp.address, userAddress5, 20, {from: ownerAddress, gas: 8000000});
+        await this.game.initialize(ownerAddress, this.xsVemp.address, userAddress5, 20, userAddress7, {from: ownerAddress, gas: 8000000});
 
         await this.xsVemp.mint(ownerAddress, "1000000000000000000000000");
         await this.xsVemp.mint(userAddress1, "1000000000000000000000000");
