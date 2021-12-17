@@ -69,7 +69,7 @@ describe('Game', function () {
 
         it("Default updateMinBattleTokens 1", async function () {
             const adminaddr = await this.game.updateAdmin(userAddress1, true, {from: ownerAddress, gas: 8000000});
-            expect(await this.game.minBattleTokens()).to.be.bignumber.equal(new BN("1"));
+            expect(await this.game.minBattleTokens()).to.be.bignumber.equal(new BN("1000000000000000000"));
         })
     });
 
@@ -176,7 +176,12 @@ describe('Game', function () {
             })
 
             it("Revert if Admin updating the winner where there are no Player 1 and Player 2", async function () {
-                await expectRevert(this.game.updateWinnerAddress([userAddress1], ["507f1f77bcf86cd799439019"], {from: ownerAddress, gas: 8000000}), "Invalid players.");
+                await expectRevert(this.game.updateWinnerAddress([userAddress1], ["507f1f77bcf86cd799439019"], {from: ownerAddress, gas: 8000000}), "Invalid Winner Address.");
+            })
+
+            it("Revert if owner is updating the winner address twice", async function () {
+                await this.game.updateWinnerAddress([userAddress1], ["507f1f77bcf86cd799439014"], {from: ownerAddress, gas: 8000000});
+                await expectRevert(this.game.updateWinnerAddress([userAddress1], ["507f1f77bcf86cd799439014"], {from: ownerAddress, gas: 8000000}), "Winner already declared");
             })
         });
     });
@@ -195,6 +200,15 @@ describe('Game', function () {
                 expect(await this.xsVemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN("1000060000000000000000000"));
             })
 
+            it("Claim reward amount from winner address", async function () {
+                await this.game.updateWinnerAddress([userAddress1], ["507f1f77bcf86cd799439014"], {from: ownerAddress, gas: 8000000});
+                await this.game.claimBattleRewards("507f1f77bcf86cd799439014", {from: userAddress1, gas: 8000000});
+                expect(await this.xsVemp.balanceOf(this.game.address)).to.be.bignumber.equal(new BN("40000000000000000000"));
+                expect(await this.xsVemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN("1000060000000000000000000"));
+
+                await expectRevert(this.game.claimBattleRewards("507f1f77bcf86cd799439014", {from: userAddress1, gas: 8000000}), "Already claimed");
+            })
+
             it("Claim reward amount from non winner address", async function () {
                 await this.game.updateWinnerAddress([userAddress1], ["507f1f77bcf86cd799439014"], {from: ownerAddress, gas: 8000000});
                 await expectRevert(this.game.claimBattleRewards("507f1f77bcf86cd799439014", {from: userAddress2, gas: 8000000}), "Only winner can call this method.");
@@ -210,16 +224,16 @@ describe('Game', function () {
 
     describe('Update ddao percent', function () {   
         it("If Owner update dao percent", async function () {
-            await this.game.updateDdoaPercent(10, {from: ownerAddress, gas: 8000000});
+            await this.game.updateDDAOPercent(10, {from: ownerAddress, gas: 8000000});
             expect(await this.game.daoPercent()).to.be.bignumber.equal(new BN("10"));
         })    
 
         it("Revert if dao percent update by non owner", async function () {
-            await expectRevert(this.game.updateDdoaPercent(10, {from: userAddress4, gas: 8000000}), "Ownable: caller is not the owner.");
+            await expectRevert(this.game.updateDDAOPercent(10, {from: userAddress4, gas: 8000000}), "Ownable: caller is not the owner.");
         })
 
         it("If Owner update dao percent more than 100", async function () {
-            await expectRevert(this.game.updateDdoaPercent(101, {from: ownerAddress, gas: 8000000}), "Invalid Dao Percent");
+            await expectRevert(this.game.updateDDAOPercent(101, {from: ownerAddress, gas: 8000000}), "Invalid Dao Percent");
         })
     });
 

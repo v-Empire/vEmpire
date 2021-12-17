@@ -605,6 +605,8 @@ contract ProxyAdmin is Ownable {
    * @param implementation the address of the Implementation.
    */
   function upgrade(AdminUpgradeabilityProxy proxy, address implementation) public onlyOwner {
+    require(address(proxy) != address(0), "Invalid proxy address");
+    require(implementation != address(0), "Invalid implementation address");
     proxy.upgradeTo(implementation);
   }
 
@@ -618,6 +620,8 @@ contract ProxyAdmin is Ownable {
    * https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.
    */
   function upgradeAndCall(AdminUpgradeabilityProxy proxy, address implementation, bytes memory data) payable public onlyOwner {
+    require(address(proxy) != address(0), "Invalid proxy address");
+    require(implementation != address(0), "Invalid implementation address");
     proxy.upgradeToAndCall{value: msg.value}(implementation, data);
   }
 }

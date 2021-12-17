@@ -22,6 +22,7 @@ contract vEmpireGame is Ownable {
         uint256 riskPercent;
         string roomId;
         address winnerAddress;
+        bool claimStatus;
     }
 
     // User Info of each battle Id
@@ -53,7 +54,7 @@ contract vEmpireGame is Ownable {
     uint256 public daoTokens;
 
     // min xsVemp tokens to participate into the pool
-    uint256 public minBattleTokens = 1;
+    uint256 public minBattleTokens = 1000000000000000000;
 
     // Admin list
     mapping(address => bool) public adminStatus;
@@ -90,7 +91,7 @@ contract vEmpireGame is Ownable {
     /**
      * @dev Return list of players addresses for airdrop 
      */
-    function getPlayersforAirdrop()
+    function getPlayersForAirdrop()
         public
         view
         onlyAdmin
@@ -116,12 +117,13 @@ contract vEmpireGame is Ownable {
         }
         require(
             _poolAmount >= minBattleTokens,
-            "pool amount can not less than min battle tokens"
+            "Pool amount can not less than min battle tokens"
         );
 
         BattleInfo storage battle = battleInfo[_roomId];
         UserInfo storage user = userInfo[_roomId][msg.sender];
 
+        require(battle.winnerAddress == address(0), "Battle already ended");
         if (battle.player1 != address(0)) {
             require(
                 keccak256(bytes(battle.roomId)) == keccak256(bytes(_roomId)) && battle.player2 == address(0),
@@ -181,7 +183,7 @@ contract vEmpireGame is Ownable {
             UserInfo storage user1 = userInfo[_roomId[i]][battle.player1];
             UserInfo storage user2 = userInfo[_roomId[i]][battle.player2];
 
-            require(_winnerAddress[i] != address(0), "Invalid Winner Address");
+            require(_winnerAddress[i] != address(0) && (battle.player1 == _winnerAddress[i] || battle.player2 == _winnerAddress[i]), "Invalid Winner Address");
             require(battle.player1 != address(0) || battle.player2 != address(0), "Invalid players");
             require(
                 user1.xsVempLockStatus != false || user2.xsVempLockStatus != false,
@@ -194,7 +196,9 @@ contract vEmpireGame is Ownable {
             address _loser = _winnerAddress[i] == battle.player1
                 ? battle.player2
                 : battle.player1;
-            playersForAirdrop.push(_loser);
+            if(_loser != address(0)) {
+                playersForAirdrop.push(_loser);
+            }
             loser[_roomId[i]] = _loser;
             winners.push(battle.winnerAddress);
         }
@@ -219,14 +223,23 @@ contract vEmpireGame is Ownable {
             "Only winner can call this method"
         );
         require(user.xsVempLockStatus != false, "Invalid users lock status");
+        require(battle.claimStatus != true, "Already claimed");
 
-        uint256 winnerShare = 100;
-        uint256 winnerAmount = battle.poolAmount.mul(2).mul(winnerShare.sub(daoPercent)).div(100);
-        daoTokens = daoTokens.add((battle.poolAmount.mul(2).sub(winnerAmount)));
-        IERC20(xsVemp).transfer(
-            battle.winnerAddress,
-            winnerAmount
-        );
+        if(battle.player2 != address(0)) {
+            uint256 winnerShare = 100;
+            uint256 winnerAmount = battle.poolAmount.mul(2).mul(winnerShare.sub(daoPercent)).div(100);
+            daoTokens = daoTokens.add((battle.poolAmount.mul(2).sub(winnerAmount)));
+            IERC20(xsVemp).transfer(
+                battle.winnerAddress,
+                winnerAmount
+            );
+        } else {
+            IERC20(xsVemp).transfer(
+                battle.winnerAddress,
+                battle.poolAmount
+            );
+        }
+        battle.claimStatus = true;
     }
 
     /**
@@ -285,7 +298,7 @@ contract vEmpireGame is Ownable {
      *
      * @param _ddaoPercent dao percent to send on ddao contract for distribution to all vemp stakers
      */
-    function updateDdoaPercent(uint256 _ddaoPercent) public onlyOwner {
+    function updateDDAOPercent(uint256 _ddaoPercent) public onlyOwner {
         require(_ddaoPercent <= 100, "Invalid Dao Percent");
         daoPercent = _ddaoPercent;
     }
@@ -327,19 +340,20 @@ contract vEmpireGame is Ownable {
     }
 
     /**
-     * @dev Used only by admin or owner, used to update winner in emergency
+     * @dev Used only by owner, used to update winner in emergency
      *
      * @param _roomId room Id represents index or room identity of both players 
      * @param _winnerAddress address of winner player
      */
     function updateWinnerInEmergency(string memory _roomId, address _winnerAddress)
         public
-        onlyAdmin
+        onlyOwner
     {
         BattleInfo storage battle = battleInfo[_roomId];
         UserInfo storage user1 = userInfo[_roomId][battle.player1];
         UserInfo storage user2 = userInfo[_roomId][battle.player2];
 
+        require(_winnerAddress != address(0) && (battle.player1 == _winnerAddress || battle.player2 == _winnerAddress), "Invalid Winner Address");
         require(
             battle.player1 != address(0) || battle.player2 != address(0),
             "Invalid players"
@@ -348,14 +362,16 @@ contract vEmpireGame is Ownable {
             user1.xsVempLockStatus != false || user2.xsVempLockStatus != false,
             "Invalid users lock status"
         );
-        require(battle.winnerAddress == address(0), "Winner already declared");
+        require(battle.claimStatus != true, "Already claimed");
 
         battle.winnerAddress = _winnerAddress;
 
         address _loser = _winnerAddress == battle.player1
             ? battle.player2
             : battle.player1;
-        playersForAirdrop.push(_loser);
+        if(_loser != address(0)) {
+            playersForAirdrop.push(_loser);
+        }
         loser[_roomId] = _loser;
         winners.push(battle.winnerAddress);
     }
