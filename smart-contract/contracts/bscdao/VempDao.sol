@@ -43,9 +43,9 @@ contract VempDao is Ownable {
             xVEMP.mint(_msgSender(), _amount);
             emit Stake(_msgSender(), _amount);
         } else {
-            uint256 what = _amount.mul(totalShares).div(totalVemp);
-            xVEMP.mint(_msgSender(), what);
-            emit Stake(_msgSender(), what);
+            uint256 _userShare = _amount.mul(totalShares).div(totalVemp);
+            xVEMP.mint(_msgSender(), _userShare);
+            emit Stake(_msgSender(), _userShare);
         }
         VEMP.transferFrom(_msgSender(), address(this), _amount);
     }
@@ -53,17 +53,18 @@ contract VempDao is Ownable {
     // Leave the VempDao. Claim back your VEMPs.
     function leave(uint256 _share) public {
         uint256 totalShares = xVEMP.totalSupply();
-        uint256 what =
+        uint256 _userShare =
             _share.mul(VEMP.balanceOf(address(this))).div(totalShares);
         xVEMP.burnFrom(_msgSender(), _share);
-        VEMP.transfer(_msgSender(), what);
-        emit Unstake(_msgSender(), what);
+        VEMP.transfer(_msgSender(), _userShare);
+        emit Unstake(_msgSender(), _userShare);
     }
 
     function setRewardDistribution(address _rewardDistribution)
         external
         onlyOwner
     {
+        require(_rewardDistribution != address(0), "Invalid _rewardDistribution address");
         rewardDistribution = _rewardDistribution;
         emit RewardDistributorSet(_rewardDistribution);
     }
@@ -91,6 +92,7 @@ contract VempDao is Ownable {
         require(_token != address(0), "Invalid _to address");
         uint256 vempBal = IERC20(_token).balanceOf(address(this));
         require(vempBal >= _amount, "Insufficiently amount");
-        IERC20(_token).transfer(_to, _amount);
+        bool status = IERC20(_token).transfer(_to, _amount);
+        require(status, "Token transfer failed");
     }
 }

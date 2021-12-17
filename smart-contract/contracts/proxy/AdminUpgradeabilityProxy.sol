@@ -84,10 +84,6 @@ abstract contract Proxy {
 
 // File: openzeppelin-solidity/contracts/utils/Address.sol
 
-
-
-pragma solidity ^0.6.2;
-
 /**
  * @dev Collection of functions related to the address type
  */
@@ -228,12 +224,6 @@ library Address {
 
 // File: openzeppelin-solidity/contracts/proxy/UpgradeableProxy.sol
 
-
-
-pragma solidity ^0.6.0;
-
-
-
 /**
  * @dev This contract implements an upgradeable proxy. It is upgradeable because calls are delegated to an
  * implementation address that can be changed. This address is stored in storage in the location specified by
@@ -251,6 +241,7 @@ contract UpgradeableProxy is Proxy {
      * function call, and allows initializating the storage of the proxy like a Solidity constructor.
      */
     constructor(address _logic, bytes memory _data) public payable {
+        require(_logic != address(0), "Invalid logic address");
         assert(_IMPLEMENTATION_SLOT == bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1));
         _setImplementation(_logic);
         if(_data.length > 0) {
@@ -309,11 +300,6 @@ contract UpgradeableProxy is Proxy {
 }
 
 // File: openzeppelin-solidity/contracts/proxy/TransparentUpgradeableProxy.sol
-
-
-
-pragma solidity ^0.6.0;
-
 
 /**
  * @dev This contract implements a proxy that is upgradeable by an admin.
@@ -425,6 +411,7 @@ contract TransparentUpgradeableProxy is UpgradeableProxy {
      * NOTE: Only the admin can call this function. See {ProxyAdmin-upgradeAndCall}.
      */
     function upgradeToAndCall(address newImplementation, bytes calldata data) external payable ifAdmin {
+        require(newImplementation != address(0), "Invalid newImplementation address");
         _upgradeTo(newImplementation);
         // solhint-disable-next-line avoid-low-level-calls
         (bool success,) = newImplementation.delegatecall(data);
@@ -464,14 +451,8 @@ contract TransparentUpgradeableProxy is UpgradeableProxy {
 }
 
 // File: contracts/AdminUpgradeabilityProxy.sol
-
-pragma solidity ^0.6.0;
-
-
 contract AdminUpgradeabilityProxy is TransparentUpgradeableProxy {
 
     constructor(address logic, address admin, bytes memory data) TransparentUpgradeableProxy(logic, admin, data) public {
-
     }
-
 }
