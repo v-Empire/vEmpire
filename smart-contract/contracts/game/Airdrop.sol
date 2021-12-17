@@ -137,5 +137,7 @@ contract RandomNumberConsumer is VRFConsumerBase, Context, Ownable {
         uint256 vempBal = IERC20(rewardToken).balanceOf(address(this));
         require(vempBal >= _amount, "Insufficiently amount");
         IERC20(rewardToken).transfer(_to, _amount);
+	bool status = IERC20(rewardToken).transfer(_to, _amount);
+        require(status, "Token transfer failed");
     }
 }
