@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface vEmpireGame {
-    function getPlayersforAirdrop() external view returns (address[] memory);
+    function getPlayersForAirdrop() external view returns (address[] memory);
 }
 
 contract RandomNumberConsumer is VRFConsumerBase, Context, Ownable {
@@ -94,17 +94,17 @@ contract RandomNumberConsumer is VRFConsumerBase, Context, Ownable {
     
     function pickWinner(uint256 _lotteryAmount) public onlyOwner {
         require(
-            vEmpireGame(gameAddress).getPlayersforAirdrop().length > 0,
+            vEmpireGame(gameAddress).getPlayersForAirdrop().length > 0,
             "No addresses for airdrop lottery"
         );
 
         uint256 arrayIndex = SafeMath.mod(
             randomResult,
-            vEmpireGame(gameAddress).getPlayersforAirdrop().length
+            vEmpireGame(gameAddress).getPlayersForAirdrop().length
         );
 
         IERC20(rewardToken).transfer(
-            vEmpireGame(gameAddress).getPlayersforAirdrop()[arrayIndex],
+            vEmpireGame(gameAddress).getPlayersForAirdrop()[arrayIndex],
             _lotteryAmount
         );
     }
