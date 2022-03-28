@@ -63,7 +63,7 @@ contract MasterChefAPE is Ownable {
     PoolInfo public poolInfo;
     // Info of each user that stakes LP tokens.
     mapping (address => UserInfo) public userInfo;
-    // Total allocation poitns. Must be the sum of all allocation points in all pools.
+    // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
     // The block number when VEMP mining starts.
     uint256 public startBlock;
@@ -75,12 +75,17 @@ contract MasterChefAPE is Ownable {
     bool public withdrawStatus;
     // reward end status
     bool public rewardEndStatus;
-    // rewad end block number
+    // reward end block number
     uint256 public rewardEndBlock;
 
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
+    event Set(uint256 allocPoint, bool overwrite);
+    event RewardEndStatus(bool rewardStatus, uint256 rewardEndBlock);
+    event RewardPerBlock(uint256 oldRewardPerBlock, uint256 newRewardPerBlock);
+    event AccessAPEToken(address indexed user, uint256 amount, uint256 totalAPEUsedForPurchase);
+    event AddAPETokensInPool(uint256 amount, uint256 totalAPEUsedForPurchase);
 
     constructor() public {}
 
@@ -91,6 +96,9 @@ contract MasterChefAPE is Ownable {
         uint256 _VEMPPerBlock,
         uint256 _startBlock
     ) public initializer {
+        require(address(_VEMP) != address(0), "Invalid VEMP address");
+        require(address(_lpToken) != address(0), "Invalid lpToken address");
+        require(address(_adminaddr) != address(0), "Invalid admin address");
         Ownable.init(_adminaddr);
         VEMP = _VEMP;
         adminaddr = _adminaddr;
@@ -119,6 +127,7 @@ contract MasterChefAPE is Ownable {
         }
         totalAllocPoint = totalAllocPoint.sub(poolInfo.allocPoint).add(_allocPoint);
         poolInfo.allocPoint = _allocPoint;
+        emit Set(_allocPoint, _withUpdate);
     }
     
     // Return reward multiplier over the given _from to _to block.
@@ -281,6 +290,7 @@ contract MasterChefAPE is Ownable {
     
     // Safe APE transfer function to admin.
     function accessAPETokens(address _to, uint256 _amount) public {
+        require(_to != address(0), "Invalid to address");
         require(msg.sender == adminaddr, "sender must be admin address");
         require(totalAPEStaked.sub(totalAPEUsedForPurchase) >= _amount, "Amount must be less than staked APE amount");
         PoolInfo storage pool = poolInfo;
@@ -292,6 +302,7 @@ contract MasterChefAPE is Ownable {
             pool.lpToken.safeTransfer(_to, _amount);
             totalAPEUsedForPurchase = totalAPEUsedForPurchase.add(_amount);
         }
+        emit AccessAPEToken(_to, _amount, totalAPEUsedForPurchase);
     }
 
     // Safe add APE in pool
@@ -302,11 +313,13 @@ contract MasterChefAPE is Ownable {
         PoolInfo storage pool = poolInfo;
         totalAPEUsedForPurchase = totalAPEUsedForPurchase.sub(_amount);
         pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
+        emit AddAPETokensInPool(_amount, totalAPEUsedForPurchase);
     }
 
     // Update Reward per block
     function updateRewardPerBlock(uint256 _newRewardPerBlock) public onlyOwner {
         updatePool();
+        emit RewardPerBlock(VEMPPerBlock, _newRewardPerBlock);
         VEMPPerBlock = _newRewardPerBlock;
     }
 
@@ -321,16 +334,19 @@ contract MasterChefAPE is Ownable {
         require(rewardEndStatus != _status, "Already same status");
         rewardEndBlock = _rewardEndBlock;
         rewardEndStatus = _status;
+        emit RewardEndStatus(_status, _rewardEndBlock);
     }
 
     // Update admin address by the previous admin.
     function admin(address _adminaddr) public {
+        require(_adminaddr != address(0), "Invalid admin address");
         require(msg.sender == adminaddr, "admin: wut?");
         adminaddr = _adminaddr;
     }
 
     // Safe VEMP transfer function to admin.
     function emergencyWithdrawRewardTokens(address _to, uint256 _amount) public {
+        require(_to != address(0), "Invalid to address");
         require(msg.sender == adminaddr, "sender must be admin address");
         safeVEMPTransfer(_to, _amount);
     }
