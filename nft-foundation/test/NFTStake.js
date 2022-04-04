@@ -33,9 +33,9 @@ describe('Staking contract', function () {
     ])
     await stakeContract.deployed()
 
-    await nftToken.safeMint(owner.address)
-    await nftToken.safeMint(owner.address)
-    await nftToken.safeMint(owner.address)
+    await nftToken.mint(owner.address, 0, 1, '0x')
+    await nftToken.mint(owner.address, 1, 1, '0x')
+    await nftToken.mint(owner.address, 2, 1, '0x')
 
     await stakeContract.whiteListNFT([0, 1, 2], true)
   })
@@ -79,23 +79,24 @@ describe('Staking contract', function () {
 
   describe('Not allow un-whitelisted nft tokens', function () {
     it('Should not stake the token if token id not whitelisted', async function () {
-      await nftToken.safeMint(owner.address)
+      await nftToken.mint(owner.address, 3, 1, '0x')
       await nftToken.setApprovalForAll(stakeContract.address, true)
-      await expectRevert(stakeContract.deposit([3]), 'Invalid token NFT')
+      await expectRevert(stakeContract.deposit([3], [1]), 'Invalid token NFT')
     })
   })
 
   describe('Stake token', function () {
     it('Should stake the token in staking contract', async function () {
       await nftToken.setApprovalForAll(stakeContract.address, true)
-      await stakeContract.deposit([0])
-      expect(await nftToken.balanceOf(stakeContract.address)).to.equal(1)
+      await stakeContract.deposit([0], [1])
+      expect(await nftToken.balanceOf(stakeContract.address, 0)).to.equal(1)
     })
 
     it('Should stake the multiple token in staking contract', async function () {
       await nftToken.setApprovalForAll(stakeContract.address, true)
-      await stakeContract.deposit([0, 1])
-      expect(await nftToken.balanceOf(stakeContract.address)).to.equal(2)
+      await stakeContract.deposit([0, 1], [1, 1])
+      expect(await nftToken.balanceOf(stakeContract.address, 0)).to.equal(1)
+      expect(await nftToken.balanceOf(stakeContract.address, 1)).to.equal(1)
     })
   })
 
@@ -127,13 +128,13 @@ describe('Staking contract', function () {
   describe('Rewards', function () {
     it('Reward should be divided among multiple staker', async function () {
       await nftToken.setApprovalForAll(stakeContract.address, true)
-      await nftToken.transferFrom(owner.address, addr1.address, 1)
+      await nftToken.safeTransferFrom(owner.address, addr1.address, 1, 1, '0x')
       await nftToken
         .connect(addr1)
         .setApprovalForAll(stakeContract.address, true)
 
-      await stakeContract.deposit([0])
-      await stakeContract.connect(addr1).deposit([1])
+      await stakeContract.deposit([0], [1])
+      await stakeContract.connect(addr1).deposit([1], [1])
 
       await erc20Token.transfer(stakeContract.address, 100)
       expect(await stakeContract.claimableRewards(owner.address)).to.equal(50)
@@ -142,27 +143,27 @@ describe('Staking contract', function () {
 
     it('Reward should not not get the tokens from previous rewards', async function () {
       await nftToken.setApprovalForAll(stakeContract.address, true)
-      await nftToken.transferFrom(owner.address, addr1.address, 1)
+      await nftToken.safeTransferFrom(owner.address, addr1.address, 1, 1, '0x')
       await nftToken
         .connect(addr1)
         .setApprovalForAll(stakeContract.address, true)
 
-      await stakeContract.deposit([0])
+      await stakeContract.deposit([0], [1])
       await erc20Token.transfer(stakeContract.address, 100)
 
-      await stakeContract.connect(addr1).deposit([1])
+      await stakeContract.connect(addr1).deposit([1], [1])
       expect(await stakeContract.claimableRewards(owner.address)).to.equal(100)
       expect(await stakeContract.claimableRewards(addr1.address)).to.equal(0)
     })
 
     it('User should get the correct tokens on claim', async function () {
       await nftToken.setApprovalForAll(stakeContract.address, true)
-      await nftToken.transferFrom(owner.address, addr1.address, 1)
+      await nftToken.safeTransferFrom(owner.address, addr1.address, 1, 1, '0x')
       await nftToken
         .connect(addr1)
         .setApprovalForAll(stakeContract.address, true)
 
-      await stakeContract.connect(addr1).deposit([1])
+      await stakeContract.connect(addr1).deposit([1], [1])
       await erc20Token.transfer(stakeContract.address, 100)
       expect(await stakeContract.claimableRewards(addr1.address)).to.equal(100)
       await stakeContract.connect(addr1).claimRewards()
@@ -171,8 +172,8 @@ describe('Staking contract', function () {
     })
 
     it('User should get the correct tokens on claim when multiple users stake', async function () {
-      await nftToken.transferFrom(owner.address, addr1.address, 1)
-      await nftToken.transferFrom(owner.address, addr2.address, 0)
+      await nftToken.safeTransferFrom(owner.address, addr1.address, 1, 1, '0x')
+      await nftToken.safeTransferFrom(owner.address, addr2.address, 0, 1, '0x')
       await nftToken
         .connect(addr1)
         .setApprovalForAll(stakeContract.address, true)
@@ -180,8 +181,8 @@ describe('Staking contract', function () {
         .connect(addr2)
         .setApprovalForAll(stakeContract.address, true)
 
-      await stakeContract.connect(addr1).deposit([1])
-      await stakeContract.connect(addr2).deposit([0])
+      await stakeContract.connect(addr1).deposit([1], [1])
+      await stakeContract.connect(addr2).deposit([0], [1])
       await erc20Token.transfer(stakeContract.address, 100)
       expect(await stakeContract.claimableRewards(addr1.address)).to.equal(50)
       expect(await stakeContract.claimableRewards(addr2.address)).to.equal(50)
@@ -196,8 +197,8 @@ describe('Staking contract', function () {
 
   describe('Claim rewards after multiple stake/claim', function () {
     beforeEach(async function () {
-      await nftToken.transferFrom(owner.address, addr1.address, 0)
-      await nftToken.transferFrom(owner.address, addr2.address, 1)
+      await nftToken.safeTransferFrom(owner.address, addr1.address, 0, 1, '0x')
+      await nftToken.safeTransferFrom(owner.address, addr2.address, 1, 1, '0x')
       await nftToken
         .connect(addr1)
         .setApprovalForAll(stakeContract.address, true)
@@ -205,20 +206,20 @@ describe('Staking contract', function () {
         .connect(addr2)
         .setApprovalForAll(stakeContract.address, true)
 
-      await stakeContract.connect(addr1).deposit([0])
-      await stakeContract.connect(addr2).deposit([1])
+      await stakeContract.connect(addr1).deposit([0], [1])
+      await stakeContract.connect(addr2).deposit([1], [1])
       await erc20Token.transfer(stakeContract.address, 100)
       await stakeContract.connect(addr1).claimRewards()
     })
 
     it('User should get the correct tokens on deposit again', async function () {
       await nftToken.setApprovalForAll(stakeContract.address, true)
-      await nftToken.transferFrom(owner.address, addrs[0].address, 2)
+      await nftToken.safeTransferFrom(owner.address, addrs[0].address, 2, 1, '0x')
       await nftToken
         .connect(addrs[0])
         .setApprovalForAll(stakeContract.address, true)
 
-      await stakeContract.connect(addrs[0]).deposit([2])
+      await stakeContract.connect(addrs[0]).deposit([2], [1])
       expect(await stakeContract.claimableRewards(addrs[0].address)).to.equal(0)
       await erc20Token.transfer(stakeContract.address, 100)
       expect(await stakeContract.claimableRewards(addrs[0].address)).to.equal(
@@ -239,14 +240,14 @@ describe('Staking contract', function () {
 
     it('User should get the correct tokens on multiple deposit/withdraw too', async function () {
       await nftToken.setApprovalForAll(stakeContract.address, true)
-      await nftToken.transferFrom(owner.address, addrs[0].address, 2)
+      await nftToken.safeTransferFrom(owner.address, addrs[0].address, 2, 1, '0x')
       await nftToken
         .connect(addrs[0])
         .setApprovalForAll(stakeContract.address, true)
 
-      await stakeContract.connect(addr1).withdraw([0])
+      await stakeContract.connect(addr1).withdraw([0], [1])
 
-      await stakeContract.connect(addrs[0]).deposit([2])
+      await stakeContract.connect(addrs[0]).deposit([2], [1])
       expect(await stakeContract.claimableRewards(addrs[0].address)).to.equal(0)
       await erc20Token.transfer(stakeContract.address, 100)
       expect(await stakeContract.claimableRewards(addrs[0].address)).to.equal(
@@ -265,7 +266,7 @@ describe('Staking contract', function () {
       expect(await erc20Token.balanceOf(addr1.address)).to.equal(50)
 
       await erc20Token.transfer(stakeContract.address, 100)
-      await stakeContract.connect(addr1).deposit([0])
+      await stakeContract.connect(addr1).deposit([0], [1])
       await erc20Token.transfer(stakeContract.address, 100)
       expect(await stakeContract.claimableRewards(addrs[0].address)).to.equal(
         83,
