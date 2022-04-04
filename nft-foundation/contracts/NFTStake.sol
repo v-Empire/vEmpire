@@ -37,6 +37,8 @@ contract NFTStake is
 
     function initialize(address _erc20Token, address _erc721Token) public initializer  {
        OwnableUpgradeable.__Ownable_init();
+       require(address(_erc20Token) != address(0), "Invalid erc20Token address");
+       require(address(_erc721Token) != address(0), "Invalid erc721Token address");
        ERC20_CONTRACT = _erc20Token;
        ERC721_CONTRACT = _erc721Token;
     }
