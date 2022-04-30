@@ -145,7 +145,7 @@ contract LiquidityPool is Ownable {
         if(_directStatus) {
             uint256 vempAmount = VEMP.balanceOf(msg.sender);
             uint256 burnAmount = userInfo.amount.sub(user.amount).mul(vempBurnPercent).div(1000);
-            if(userLock.amount > 0 && userLock.lockTime.add(lockPeriod) <= block.timestamp) {
+            if((userLock.amount > 0 && userLock.lockTime.add(lockPeriod) <= block.timestamp) || _migrate) {
                 burnAmount = 0;
                 VEMP.transfer(msg.sender, userLock.amount.sub(burnAmount));
             } else if(userLock.amount > 0 && userLock.lockTime.add(lockPeriod.div(2)) <= block.timestamp) {
@@ -165,9 +165,9 @@ contract LiquidityPool is Ownable {
             }
         } else {
             uint256 xVempAmount = xVEMP.balanceOf(msg.sender);
-            require(userInfo.amount.sub(user.amount).mul(xVempHoldPercent).div(1000) <= xVempAmount, "Insufficient xVEMP Hold Amount");
-            require(userInfo.amount.sub(user.amount).mul(vempLockPercent).div(1000) <= userLock.amount, "Insufficient VEMP Locked");
-            require(userLock.lockTime.add(lockPeriod) <= block.timestamp, "Lock period not complete.");
+            require(userInfo.amount.sub(user.amount).mul(xVempHoldPercent).div(1000) <= xVempAmount || _migrate, "Insufficient xVEMP Hold Amount");
+            require(userInfo.amount.sub(user.amount).mul(vempLockPercent).div(1000) <= userLock.amount || _migrate, "Insufficient VEMP Locked");
+            require(userLock.lockTime.add(lockPeriod) <= block.timestamp  || _migrate, "Lock period not complete.");
             if(_migrate) {
                 IERC20(poolInfo.lpToken).approve(chef[_masterChef], userInfo.amount.sub(user.amount));
                 IMasterChef(chef[_masterChef]).deposit(msg.sender, userInfo.amount.sub(user.amount));
