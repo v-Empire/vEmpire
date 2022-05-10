@@ -4,26 +4,19 @@ const { BN, expectRevert, time} = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const MasterChefMana = contract.fromArtifact('MasterChefMana');
 const MockToken = contract.fromArtifact('MockToken');
-const xVEMP = contract.fromArtifact('xVEMPBEP20Token');
-const LiquidityPool = contract.fromArtifact('LiquidityPool');   
-const Sanctuary = contract.fromArtifact('VempDao');
+const LiquidityPool = contract.fromArtifact('LiquidityPool');
 
 describe('LiquidityPool', function () {
     const [ ownerAddress, userAddress1, userAddress2, userAddress3, userAddress4 ] = accounts;
     beforeEach(async function () {
         this.vemp = await MockToken.new("VEMP", "VEMP", {from: ownerAddress, gas: 8000000});
-        this.xvemp = await xVEMP.new("xVEMP", "xVEMP", {from: ownerAddress});
         this.lp = await MockToken.new("MANA", "MANA", {from: ownerAddress, gas: 8000000});
         this.chef = await MasterChefMana.new(this.vemp.address, ownerAddress, "1000", "0", {from: ownerAddress, gas: 8000000});
-        await this.vemp.mint(ownerAddress, "1000000000000000000000000");
+        // await this.vemp.mint(ownerAddress, "1000000000000000000000000");
         await this.lp.mint(ownerAddress, "1000000000000000000000000", {from: ownerAddress, gas: 8000000});
 
         this.liquidityPool = await LiquidityPool.new({from: ownerAddress});
-        await this.liquidityPool.initialize(ownerAddress, this.vemp.address, this.xvemp.address, 100, 125, 60, 150, {from: ownerAddress, gas: 8000000});
-
-        this.sanctuary = await Sanctuary.new({from: ownerAddress, gas: 8000000});
-        await this.sanctuary.initialize(ownerAddress, this.vemp.address, this.xvemp.address, {from: ownerAddress, gas: 8000000});
-        await this.xvemp.addMinter([this.sanctuary.address], {from: ownerAddress, gas: 8000000});
+        await this.liquidityPool.initialize(ownerAddress, this.vemp.address, 100, 120, {from: ownerAddress, gas: 8000000});
     });
 
     describe('set/update variables', function () {
@@ -37,24 +30,14 @@ describe('LiquidityPool', function () {
             expect(this.vemp.address).to.equal(vemp);
         })
 
-        it("should set correct xVemp address", async function () {
-            const xvemp = await this.liquidityPool.xVEMP();
-            expect(this.xvemp.address).to.equal(xvemp);
+        it("should set correct Vemp Lock amount address", async function () {
+            const vempLOck = await this.liquidityPool.vempLockAmount();
+            expect(vempLOck).to.be.bignumber.equal(new BN(100))
         })
 
-        it("should set correct Vemp burn percent", async function () {
-            const vempBurnPercent = await this.liquidityPool.vempBurnPercent();
-            expect(vempBurnPercent).to.be.bignumber.equal(new BN(100))
-        })
-
-        it("should set correct xVemp hold percent", async function () {
-            const xVempHoldPercent = await this.liquidityPool.xVempHoldPercent();
-            expect(xVempHoldPercent).to.be.bignumber.equal(new BN(125))
-        })
-
-        it("should set correct Vemp lock percent", async function () {
-            const vempLockPercent = await this.liquidityPool.vempLockPercent();
-            expect(vempLockPercent).to.be.bignumber.equal(new BN(150))
+        it("should set correct Vemp lock period", async function () {
+            const lockPeriod = await this.liquidityPool.lockPeriod();
+            expect(lockPeriod).to.be.bignumber.equal(new BN(120))
         })
     });
 
@@ -78,36 +61,14 @@ describe('LiquidityPool', function () {
         })
     })
 
-    describe("updateVempBurnPercent", function () {
-        it("If non-admin try to update updateVempBurnPercent", async function () {
-            await expectRevert(this.liquidityPool.updateVempBurnPercent(101, {from: userAddress1, gas: 8000000}), "Ownable: caller is not the owner.");
+    describe("updateVempLockAmount", function () {
+        it("If non-admin try to update updateVempLockAmount", async function () {
+            await expectRevert(this.liquidityPool.updateVempLockAmount(101, {from: userAddress1, gas: 8000000}), "Ownable: caller is not the owner.");
         })
 
-        it("If admin try to update updateVempBurnPercent", async function () {
-            await this.liquidityPool.updateVempBurnPercent(101, {from: ownerAddress, gas: 8000000});
-            expect(await this.liquidityPool.vempBurnPercent()).to.be.bignumber.equal(new BN(101))
-        })
-    })
-
-    describe("updatexVempHoldPercent", function () {
-        it("If non-admin try to update updatexVempHoldPercent", async function () {
-            await expectRevert(this.liquidityPool.updateVempBurnPercent(101, {from: userAddress1, gas: 8000000}), "Ownable: caller is not the owner.");
-        })
-
-        it("If admin try to update updatexVempHoldPercent", async function () {
-            await this.liquidityPool.updatexVempHoldPercent(101, {from: ownerAddress, gas: 8000000});
-            expect(await this.liquidityPool.xVempHoldPercent()).to.be.bignumber.equal(new BN(101))
-        })
-    })
-
-    describe("updateVempLockPercent", function () {
-        it("If non-admin try to update updateVempLockPercent", async function () {
-            await expectRevert(this.liquidityPool.updateVempLockPercent(101, {from: userAddress1, gas: 8000000}), "Ownable: caller is not the owner.");
-        })
-
-        it("If admin try to update updateVempLockPercent", async function () {
-            await this.liquidityPool.updateVempLockPercent(101, {from: ownerAddress, gas: 8000000});
-            expect(await this.liquidityPool.vempLockPercent()).to.be.bignumber.equal(new BN(101))
+        it("If admin try to update updateVempLockAmount", async function () {
+            await this.liquidityPool.updateVempLockAmount(101, {from: ownerAddress, gas: 8000000});
+            expect(await this.liquidityPool.vempLockAmount()).to.be.bignumber.equal(new BN(101))
         })
     })
 
@@ -124,6 +85,7 @@ describe('LiquidityPool', function () {
 
     describe('emergencyWithdrawTokens', function () {
         beforeEach(async function () {
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
             await this.vemp.transfer(this.liquidityPool.address, 10000, {from: ownerAddress, gas: 8000000});
         });
 
@@ -140,36 +102,33 @@ describe('LiquidityPool', function () {
 
     describe("lock", function () {
         it("Failed if masterchef address 0", async function () {
-            await expectRevert(this.liquidityPool.lock("0x0000000000000000000000000000000000000000", 100, {from: ownerAddress, gas: 8000000}), "Invalid masterChef Address.");
+            await expectRevert(this.liquidityPool.lock("0x0000000000000000000000000000000000000000", {from: ownerAddress, gas: 8000000}), "Invalid masterChef Address.");
         })
 
         it("Failed if masterchef not whitelisted", async function () {
-            await expectRevert(this.liquidityPool.lock(userAddress1, 100, {from: ownerAddress, gas: 8000000}), "MasterChef not whiteListed.");
+            await expectRevert(this.liquidityPool.lock(userAddress1, {from: ownerAddress, gas: 8000000}), "MasterChef not whiteListed.");
         })
 
         it("If try to lock low vemp amount", async function () {
             await this.chef.add("100", this.lp.address, true, { from: ownerAddress })
             await this.lp.approve(this.chef.address, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: ownerAddress })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
-            await this.sanctuary.enter(10000, {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
             
-            await expectRevert(this.liquidityPool.lock(this.chef.address, 14, {from: ownerAddress, gas: 8000000}), "Insufficient VEMP Locked.");
+            await expectRevert(this.liquidityPool.lock(this.chef.address, {from: ownerAddress, gas: 8000000}), "Insufficient VEMP for Lock.");
         })
 
         it("Lock vemp Tokens", async function () {
             await this.chef.add("100", this.lp.address, true, { from: ownerAddress })
             await this.lp.approve(this.chef.address, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: ownerAddress })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
-            await this.sanctuary.enter(10000, {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
-            await this.liquidityPool.lock(this.chef.address, 15, {from: ownerAddress, gas: 8000000});
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
+            await this.liquidityPool.lock(this.chef.address, {from: ownerAddress, gas: 8000000});
 
             let userLockInfo = await this.liquidityPool.userLockInfo(this.chef.address, ownerAddress);
-            expect(userLockInfo[0]).to.be.bignumber.equal(new BN(15));
+            expect(userLockInfo[0]).to.be.bignumber.equal(new BN(100));
 
             expect(userLockInfo[1]).to.be.bignumber.equal(new BN(await time.latest()));
         })
@@ -178,18 +137,14 @@ describe('LiquidityPool', function () {
             await this.chef.add("100", this.lp.address, true, { from: ownerAddress })
             await this.lp.approve(this.chef.address, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: ownerAddress })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
-            await this.sanctuary.enter(10000, {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
-            await this.liquidityPool.lock(this.chef.address, 15, {from: ownerAddress, gas: 8000000});
-            
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
+            await this.liquidityPool.lock(this.chef.address, {from: ownerAddress, gas: 8000000});
             let latestTime = await time.latest();
-
-            await this.liquidityPool.lock(this.chef.address, 1, {from: ownerAddress, gas: 8000000});
-
+            await this.liquidityPool.lock(this.chef.address, {from: ownerAddress, gas: 8000000});
             let userLockInfo = await this.liquidityPool.userLockInfo(this.chef.address, ownerAddress);
-            expect(userLockInfo[0]).to.be.bignumber.equal(new BN(16));
+            expect(userLockInfo[0]).to.be.bignumber.equal(new BN(200));
             expect(userLockInfo[1]).to.be.bignumber.equal(new BN(latestTime));
         })
     })
@@ -208,43 +163,27 @@ describe('LiquidityPool', function () {
             await expectRevert(this.liquidityPool.unstake(this.chef.address, false, false, {from: ownerAddress, gas: 8000000}), "Not Staked");
         })
 
-        it("If try to unstake when not holding xVEMP", async function () {
-            await this.chef.add("100", this.lp.address, true, { from: ownerAddress })
-            await this.lp.approve(this.chef.address, "1000", {from: ownerAddress })
-            await this.chef.deposit(0, "100", { from: ownerAddress })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
-            await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
-            await this.sanctuary.enter(9, {from: ownerAddress, gas: 8000000});
-            await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
-            await this.liquidityPool.lock(this.chef.address, 15, {from: ownerAddress, gas: 8000000});
-            
-            await expectRevert(this.liquidityPool.unstake(this.chef.address, false, false, {from: ownerAddress, gas: 8000000}), "Insufficient xVEMP Hold Amount");
-        })
-
         it("If try to unstake when not lock VEMP", async function () {
             await this.chef.add("100", this.lp.address, true, { from: ownerAddress })
             await this.lp.approve(this.chef.address, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: ownerAddress })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
-            await this.sanctuary.enter(13, {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
             
             await expectRevert(this.liquidityPool.unstake(this.chef.address, false, false, {from: ownerAddress, gas: 8000000}), "Insufficient VEMP Locked");
         })
 
-        it("If try to unstake when holding xVEMP and lock vemp", async function () {
+        it("If try to unstake when lock vemp", async function () {
             await this.chef.add("100", this.lp.address, true, { from: ownerAddress })
             await this.lp.approve(this.chef.address, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: ownerAddress })
             await this.lp.transfer(this.liquidityPool.address, "10000", {from: ownerAddress });
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
-            await this.sanctuary.enter(13, {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
-            await this.liquidityPool.lock(this.chef.address, 15, {from: ownerAddress, gas: 8000000});
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
+            await this.liquidityPool.lock(this.chef.address, {from: ownerAddress, gas: 8000000});
             
-            await time.increase(60);
+            await time.increase(120);
 
             await this.liquidityPool.unstake(this.chef.address, false, false, {from: ownerAddress, gas: 8000000});
             let withdrawInfo = await this.liquidityPool.withdrawInfo(this.chef.address, ownerAddress);
@@ -258,13 +197,12 @@ describe('LiquidityPool', function () {
             await this.lp.approve(this.chef.address, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: ownerAddress })
             await this.lp.transfer(this.liquidityPool.address, "10000", {from: ownerAddress });
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: ownerAddress, gas: 8000000});
-            await this.sanctuary.enter(13, {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
-            await this.liquidityPool.lock(this.chef.address, 15, {from: ownerAddress, gas: 8000000});
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
+            await this.liquidityPool.lock(this.chef.address, {from: ownerAddress, gas: 8000000});
             
-            await time.increase(60);
+            await time.increase(120);
 
             await this.liquidityPool.unstake(this.chef.address, false, false, {from: ownerAddress, gas: 8000000});
             let withdrawInfo = await this.liquidityPool.withdrawInfo(this.chef.address, ownerAddress);
@@ -276,13 +214,12 @@ describe('LiquidityPool', function () {
         })
     })
 
-    describe("unStake(with no lock period)", function () {
+    describe("unStake(with no lock period)", function () {13.2
         it("If try to unstake when not holding vemp for Burn", async function () {
             await this.chef.add("100", this.lp.address, true, { from: ownerAddress })
             await this.lp.approve(this.chef.address, "1000", {from: userAddress1 })
             await this.lp.transfer(userAddress1, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: userAddress1 })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
             
@@ -294,9 +231,8 @@ describe('LiquidityPool', function () {
             await this.lp.approve(this.chef.address, "1000", {from: userAddress1 })
             await this.lp.transfer(userAddress1, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: userAddress1 })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
             await this.vemp.transfer(userAddress1, "10000", {from: ownerAddress, gas: 8000000});
-            await this.sanctuary.enter(9, {from: userAddress1, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
             
             await expectRevert(this.liquidityPool.unstake(this.chef.address, true, false, {from: userAddress1, gas: 8000000}), "ERC20: transfer amount exceeds allowance.");
@@ -307,8 +243,8 @@ describe('LiquidityPool', function () {
             await this.lp.approve(this.chef.address, "1000", {from: userAddress1 })
             await this.lp.transfer(userAddress1, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: userAddress1 })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
             await this.vemp.transfer(userAddress1, "10000", {from: ownerAddress, gas: 8000000});
             await this.lp.transfer(this.liquidityPool.address, "10000", {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
@@ -319,7 +255,7 @@ describe('LiquidityPool', function () {
             expect(withdrawInfo[0]).to.be.bignumber.equal(new BN(100));
             expect(withdrawInfo[1]).to.equal(true);
             expect(await this.lp.balanceOf(this.liquidityPool.address)).to.be.bignumber.equal(new BN(9900));
-            expect(await this.vemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN(9990));
+            expect(await this.vemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN(9900));
         })
 
         it("If try to unstake when holding vemp for Burn with less than half lock time", async function () {
@@ -327,21 +263,21 @@ describe('LiquidityPool', function () {
             await this.lp.approve(this.chef.address, "1000", {from: userAddress1 })
             await this.lp.transfer(userAddress1, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: userAddress1 })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
             await this.vemp.transfer(userAddress1, "10000", {from: ownerAddress, gas: 8000000});
             await this.lp.transfer(this.liquidityPool.address, "10000", {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
-            await this.liquidityPool.lock(this.chef.address, 20, {from: userAddress1, gas: 8000000});
+            await this.liquidityPool.lock(this.chef.address, {from: userAddress1, gas: 8000000});
 
-            await time.increase(25);
+            await time.increase(50);
             await this.liquidityPool.unstake(this.chef.address, true, false, {from: userAddress1, gas: 8000000});
 
             let withdrawInfo = await this.liquidityPool.withdrawInfo(this.chef.address, userAddress1);
             expect(withdrawInfo[0]).to.be.bignumber.equal(new BN(100));
             expect(withdrawInfo[1]).to.equal(true);
             expect(await this.lp.balanceOf(this.liquidityPool.address)).to.be.bignumber.equal(new BN(9900));
-            expect(await this.vemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN(9980));
+            expect(await this.vemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN(9900));
         })
 
         it("If try to unstake when holding vemp for Burn with half lock time", async function () {
@@ -349,21 +285,21 @@ describe('LiquidityPool', function () {
             await this.lp.approve(this.chef.address, "1000", {from: userAddress1 })
             await this.lp.transfer(userAddress1, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: userAddress1 })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
             await this.vemp.transfer(userAddress1, "10000", {from: ownerAddress, gas: 8000000});
             await this.lp.transfer(this.liquidityPool.address, "10000", {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
-            await this.liquidityPool.lock(this.chef.address, 20, {from: userAddress1, gas: 8000000});
+            await this.liquidityPool.lock(this.chef.address, {from: userAddress1, gas: 8000000});
 
-            await time.increase(30);
+            await time.increase(61);
             await this.liquidityPool.unstake(this.chef.address, true, false, {from: userAddress1, gas: 8000000});
 
             let withdrawInfo = await this.liquidityPool.withdrawInfo(this.chef.address, userAddress1);
             expect(withdrawInfo[0]).to.be.bignumber.equal(new BN(100));
             expect(withdrawInfo[1]).to.equal(true);
             expect(await this.lp.balanceOf(this.liquidityPool.address)).to.be.bignumber.equal(new BN(9900));
-            expect(await this.vemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN(9995));
+            expect(await this.vemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN(9950));
         })
 
         it("If try to unstake when holding vemp for Burn with more than half lock time", async function () {
@@ -371,21 +307,21 @@ describe('LiquidityPool', function () {
             await this.lp.approve(this.chef.address, "1000", {from: userAddress1 })
             await this.lp.transfer(userAddress1, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: userAddress1 })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
             await this.vemp.transfer(userAddress1, "10000", {from: ownerAddress, gas: 8000000});
             await this.lp.transfer(this.liquidityPool.address, "10000", {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
-            await this.liquidityPool.lock(this.chef.address, 20, {from: userAddress1, gas: 8000000});
+            await this.liquidityPool.lock(this.chef.address, {from: userAddress1, gas: 8000000});
 
-            await time.increase(55);
+            await time.increase(110);
             await this.liquidityPool.unstake(this.chef.address, true, false, {from: userAddress1, gas: 8000000});
 
             let withdrawInfo = await this.liquidityPool.withdrawInfo(this.chef.address, userAddress1);
             expect(withdrawInfo[0]).to.be.bignumber.equal(new BN(100));
             expect(withdrawInfo[1]).to.equal(true);
             expect(await this.lp.balanceOf(this.liquidityPool.address)).to.be.bignumber.equal(new BN(9900));
-            expect(await this.vemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN(9995));
+            expect(await this.vemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN(9950));
         })
 
         it("If try to unstake when holding vemp for Burn with more than lock time", async function () {
@@ -393,14 +329,14 @@ describe('LiquidityPool', function () {
             await this.lp.approve(this.chef.address, "1000", {from: userAddress1 })
             await this.lp.transfer(userAddress1, "1000", {from: ownerAddress })
             await this.chef.deposit(0, "100", { from: userAddress1 })
-            await this.vemp.approve(this.sanctuary.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
             await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
             await this.vemp.transfer(userAddress1, "10000", {from: ownerAddress, gas: 8000000});
             await this.lp.transfer(this.liquidityPool.address, "10000", {from: ownerAddress, gas: 8000000});
             await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
-            await this.liquidityPool.lock(this.chef.address, 20, {from: userAddress1, gas: 8000000});
+            await this.liquidityPool.lock(this.chef.address, {from: userAddress1, gas: 8000000});
 
-            await time.increase(60);
+            await time.increase(121);
             await this.liquidityPool.unstake(this.chef.address, true, false, {from: userAddress1, gas: 8000000});
 
             let withdrawInfo = await this.liquidityPool.withdrawInfo(this.chef.address, userAddress1);
@@ -408,6 +344,28 @@ describe('LiquidityPool', function () {
             expect(withdrawInfo[1]).to.equal(true);
             expect(await this.lp.balanceOf(this.liquidityPool.address)).to.be.bignumber.equal(new BN(9900));
             expect(await this.vemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN(10000));
+        })
+
+        it("If try to unstake when holding vemp for Burn with less than lock time", async function () {
+            await this.chef.add("100", this.lp.address, true, { from: ownerAddress })
+            await this.lp.approve(this.chef.address, "1000", {from: userAddress1 })
+            await this.lp.transfer(userAddress1, "1000", {from: ownerAddress })
+            await this.chef.deposit(0, "100", { from: userAddress1 })
+            await this.vemp.approve(this.liquidityPool.address, "1000000000000000000000", {from: userAddress1, gas: 8000000});
+            await this.vemp.mint(ownerAddress, "1000000000000000000000000");
+            await this.vemp.transfer(userAddress1, "10000", {from: ownerAddress, gas: 8000000});
+            await this.lp.transfer(this.liquidityPool.address, "10000", {from: ownerAddress, gas: 8000000});
+            await this.liquidityPool.whiteListMasterChef(this.chef.address, true, {from: ownerAddress, gas: 8000000});
+            await this.liquidityPool.lock(this.chef.address, {from: userAddress1, gas: 8000000});
+
+            await time.increase(12);
+            await this.liquidityPool.unstake(this.chef.address, true, false, {from: userAddress1, gas: 8000000});
+
+            let withdrawInfo = await this.liquidityPool.withdrawInfo(this.chef.address, userAddress1);
+            expect(withdrawInfo[0]).to.be.bignumber.equal(new BN(100));
+            expect(withdrawInfo[1]).to.equal(true);
+            expect(await this.lp.balanceOf(this.liquidityPool.address)).to.be.bignumber.equal(new BN(9900));
+            expect(await this.vemp.balanceOf(userAddress1)).to.be.bignumber.equal(new BN(9900));
         })
     })
 })
