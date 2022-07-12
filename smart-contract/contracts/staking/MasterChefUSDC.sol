@@ -81,7 +81,6 @@ contract MasterChefUSDC is Ownable {
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
-    event Set(uint256 allocPoint, bool overwrite);
     event RewardEndStatus(bool rewardStatus, uint256 rewardEndBlock);
     event RewardPerBlock(uint256 oldRewardPerBlock, uint256 newRewardPerBlock);
     event AccessUSDCToken(address indexed user, uint256 amount, uint256 totalUSDCUsedForPurchase);
