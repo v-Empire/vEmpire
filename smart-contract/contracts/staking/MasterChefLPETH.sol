@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../common/Ownable.sol";
+import "../common/ReentrancyGuard.sol";
 
 // MasterChef is the master of VEMP. He can make VEMP and he is a fair guy.
 //
@@ -16,7 +17,7 @@ import "../common/Ownable.sol";
 // distributed and the community can show to govern itself.
 //
 // Have fun reading it. Hopefully it's bug-free. God bless.
-contract MasterChefLP is Ownable {
+contract MasterChefLPETH is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -40,7 +41,6 @@ contract MasterChefLP is Ownable {
 
     // Info of each pool.
     struct PoolInfo {
-        IERC20 lpToken;           // Address of LP token contract.
         uint256 allocPoint;       // How many allocation points assigned to this pool. VEMPs to distribute per block.
         uint256 lastRewardBlock;  // Last block number that VEMPs distribution occurs.
         uint256 accVEMPPerShare; // Accumulated VEMPs per share, times 1e12. See below.
@@ -88,6 +88,7 @@ contract MasterChefLP is Ownable {
     uint256 public lockPeriod;
     uint256 public totalVempLock;
     mapping (address => UserLockInfo) public userLockInfo;
+    mapping (address => bool) public blackListUser;
 
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
@@ -129,7 +130,6 @@ contract MasterChefLP is Ownable {
         
         uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(100);
-        poolInfo.lpToken = _lpToken;
         poolInfo.allocPoint = 100;
         poolInfo.lastRewardBlock = lastRewardBlock;
         poolInfo.accVEMPPerShare = 0;
@@ -138,6 +138,9 @@ contract MasterChefLP is Ownable {
         poolInfo.lastLPRewardBalance = 0;
         poolInfo.totalLPReward = 0;
     }
+
+    //to recieve ETH from admin
+    receive() external payable {}
 
     function updateVempLockAmount(uint256 _vempLockAmount) public onlyOwner {
         emit UpdateVempLockAmount(vempLockAmount, _vempLockAmount);
@@ -149,9 +152,13 @@ contract MasterChefLP is Ownable {
         lockPeriod = _lockPeriod;
     }
 
+    function blackListUsers(address _user, bool _status) public onlyOwner {
+        require(blackListUser[_user] != _status, "Already in same status");
+        blackListUser[_user] = _status;
+    }
+
     function lock() public {
         UserLockInfo storage userLock = userLockInfo[msg.sender];
-        
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount > 0, "Not Staked");
         VEMP.transferFrom(msg.sender, address(this), vempLockAmount);
@@ -195,7 +202,7 @@ contract MasterChefLP is Ownable {
         uint256 accLPPerShare = pool.accLPPerShare;
         uint256 lpSupply = totalLPStaked;
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
-            uint256 rewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalLPStaked.sub(totalLPUsedForPurchase));
+            uint256 rewardBalance = address(this).balance.sub(totalLPStaked.sub(totalLPUsedForPurchase));
             uint256 _totalReward = rewardBalance.sub(pool.lastLPRewardBalance);
             accLPPerShare = accLPPerShare.add(_totalReward.mul(1e12).div(lpSupply));
         }
@@ -203,7 +210,7 @@ contract MasterChefLP is Ownable {
     }
 
     // Update reward variables of the given pool to be up-to-date.
-    function updatePool() internal {
+    function updatePool(uint256 _amount) internal {
         PoolInfo storage pool = poolInfo;
         UserInfo storage user = userInfo[msg.sender];
         
@@ -214,7 +221,7 @@ contract MasterChefLP is Ownable {
         if(rewardEndStatus != false) {
            rewardBlockNumber = rewardEndBlock;
         }
-        uint256 rewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalLPStaked.sub(totalLPUsedForPurchase));
+        uint256 rewardBalance = address(this).balance.sub(_amount).sub(totalLPStaked.sub(totalLPUsedForPurchase));
         uint256 _totalReward = pool.totalLPReward.add(rewardBalance.sub(pool.lastLPRewardBalance));
         pool.lastLPRewardBalance = rewardBalance;
         pool.totalLPReward = _totalReward;
@@ -240,41 +247,44 @@ contract MasterChefLP is Ownable {
     }
 
     // Deposit LP tokens to MasterChef for VEMP allocation.
-    function deposit(address _user, uint256 _amount) public {
+    function deposit(address _user, uint256 _amount) public payable nonReentrant {
+        require(blackListUser[_user] != true, "Not allowed");
+        require(msg.value == _amount, "Eth must be equal to staked amount");
         PoolInfo storage pool = poolInfo;
         UserInfo storage user = userInfo[_user];
-        updatePool();
+        updatePool(msg.value);
         if (user.amount > 0) {
             uint256 pending = user.amount.mul(pool.accVEMPPerShare).div(1e12).sub(user.rewardDebt);
             safeVEMPTransfer(_user, pending);
             
             uint256 LPReward = user.amount.mul(pool.accLPPerShare).div(1e12).sub(user.rewardLPDebt);
-            pool.lpToken.safeTransfer(_user, LPReward);
-            pool.lastLPRewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalLPStaked.sub(totalLPUsedForPurchase));
+            payable(_user).transfer(LPReward);
+            pool.lastLPRewardBalance = address(this).balance.sub(msg.value).sub(totalLPStaked.sub(totalLPUsedForPurchase));
         }
-        pool.lpToken.safeTransferFrom(msg.sender, address(this), _amount);
-        totalLPStaked = totalLPStaked.add(_amount);
-        user.amount = user.amount.add(_amount);
+        totalLPStaked = totalLPStaked.add(msg.value);
+        user.amount = user.amount.add(msg.value);
         user.rewardDebt = user.amount.mul(pool.accVEMPPerShare).div(1e12);
         user.rewardLPDebt = user.amount.mul(pool.accLPPerShare).div(1e12);
 
-        emit Deposit(_user, _amount);
+        emit Deposit(_user, msg.value);
     }
 
     // Withdraw LP tokens from MasterChef.
-    function withdraw(uint256 _amount, bool _directStatus) public {
+    function withdraw(uint256 _amount, bool _directStatus) public nonReentrant {
+        require(blackListUser[msg.sender] != true, "Not allowed");
         require(withdrawStatus != true, "Withdraw not allowed");
         PoolInfo storage pool = poolInfo;
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
-        updatePool();
+        require(totalLPStaked.sub(_amount) >= totalLPUsedForPurchase, "Insufficient fund");
+        updatePool(0);
         if (user.amount > 0) {
             uint256 pending = user.amount.mul(pool.accVEMPPerShare).div(1e12).sub(user.rewardDebt);
             safeVEMPTransfer(msg.sender, pending);
             
             uint256 LPReward = user.amount.mul(pool.accLPPerShare).div(1e12).sub(user.rewardLPDebt);
-            pool.lpToken.safeTransfer(msg.sender, LPReward);
-            pool.lastLPRewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalLPStaked.sub(totalLPUsedForPurchase));
+            payable(msg.sender).transfer(LPReward);
+            pool.lastLPRewardBalance = address(this).balance.sub(totalLPStaked.sub(totalLPUsedForPurchase));
         }
         UserLockInfo storage userLock = userLockInfo[msg.sender];
 
@@ -311,7 +321,7 @@ contract MasterChefLP is Ownable {
         user.rewardDebt = user.amount.mul(pool.accVEMPPerShare).div(1e12);
         user.rewardLPDebt = user.amount.mul(pool.accLPPerShare).div(1e12);
         totalLPStaked = totalLPStaked.sub(_amount);
-        pool.lpToken.safeTransfer(msg.sender, _amount);
+        payable(msg.sender).transfer(_amount);
 
         emit Withdraw(msg.sender, _amount);
     }
@@ -327,49 +337,48 @@ contract MasterChefLP is Ownable {
     }
     
     // Earn LP tokens to MasterChef.
-    function claimLP() public {
+    function claimLP() public nonReentrant {
+        require(blackListUser[msg.sender] != true, "Not allowed");
         PoolInfo storage pool = poolInfo;
         UserInfo storage user = userInfo[msg.sender];
-        updatePool();
+        updatePool(0);
         
         uint256 LPReward = user.amount.mul(pool.accLPPerShare).div(1e12).sub(user.rewardLPDebt);
-        pool.lpToken.safeTransfer(msg.sender, LPReward);
-        pool.lastLPRewardBalance = pool.lpToken.balanceOf(address(this)).sub(totalLPStaked.sub(totalLPUsedForPurchase));
+        msg.sender.transfer(LPReward);
+        pool.lastLPRewardBalance = address(this).balance.sub(totalLPStaked.sub(totalLPUsedForPurchase));
         
         user.rewardLPDebt = user.amount.mul(pool.accLPPerShare).div(1e12);
     }
     
     // Safe LP transfer function to admin.
-    function accessLPTokens(address _to, uint256 _amount) public {
+    function accessLPTokens(address payable _to, uint256 _amount) public nonReentrant {
         require(_to != address(0), "Invalid to address");
         require(msg.sender == adminaddr, "sender must be admin address");
         require(totalLPStaked.sub(totalLPUsedForPurchase) >= _amount, "Amount must be less than staked LP amount");
-        PoolInfo storage pool = poolInfo;
-        uint256 LPBal = pool.lpToken.balanceOf(address(this));
+        uint256 LPBal = address(this).balance;
         if (_amount > LPBal) {
-            pool.lpToken.safeTransfer(_to, LPBal);
+            _to.transfer(LPBal);
             totalLPUsedForPurchase = totalLPUsedForPurchase.add(LPBal);
         } else {
-            pool.lpToken.safeTransfer(_to, _amount);
+            _to.transfer(_amount);
             totalLPUsedForPurchase = totalLPUsedForPurchase.add(_amount);
         }
         emit AccessLPToken(_to, _amount, totalLPUsedForPurchase);
     }
 
     // Safe add LP in pool
-     function addLPTokensInPool(uint256 _amount) public {
+     function addLPTokensInPool(uint256 _amount) public payable nonReentrant {
+        require(msg.value == _amount, "Eth must be equal to staked amount");
         require(_amount > 0, "LP amount must be greater than 0");
         require(msg.sender == adminaddr, "sender must be admin address");
-        require(_amount.add(totalLPStaked.sub(totalLPUsedForPurchase)) <= totalLPStaked, "Amount must be less than staked LP amount");
-        PoolInfo storage pool = poolInfo;
+        require(msg.value.add(totalLPStaked.sub(totalLPUsedForPurchase)) <= totalLPStaked, "Amount must be less than staked LP amount");
         totalLPUsedForPurchase = totalLPUsedForPurchase.sub(_amount);
-        pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
         emit AddLPTokensInPool(_amount, totalLPUsedForPurchase);
     }
 
     // Update Reward per block
     function updateRewardPerBlock(uint256 _newRewardPerBlock) public onlyOwner {
-        updatePool();
+        updatePool(0);
         emit RewardPerBlock(VEMPPerBlock, _newRewardPerBlock);
         VEMPPerBlock = _newRewardPerBlock;
     }
@@ -396,7 +405,7 @@ contract MasterChefLP is Ownable {
     }
 
     // Safe VEMP transfer function to admin.
-    function emergencyWithdrawRewardTokens(address _to, uint256 _amount) public {
+    function emergencyWithdrawRewardTokens(address _to, uint256 _amount) public nonReentrant {
         require(_to != address(0), "Invalid to address");
         require(msg.sender == adminaddr, "sender must be admin address");
         safeVEMPTransfer(_to, _amount);

@@ -11,6 +11,7 @@ contract VempDao is Ownable {
     IERC20 public VEMP;
     IERC20 public xVEMP;
     address public rewardDistribution;
+    mapping(address => bool) public blackListAddress;
 
     event Stake(address indexed staker, uint256 xvempReceived);
     event Unstake(address indexed unstaker, uint256 vempReceived);
@@ -37,6 +38,7 @@ contract VempDao is Ownable {
 
     // Enter the VempDao. Pay some VEMPs. Earn some shares.
     function enter(uint256 _amount) public {
+        require(blackListAddress[msg.sender] != true, "BlackListed User");
         uint256 totalVemp = VEMP.balanceOf(address(this));
         uint256 totalShares = xVEMP.totalSupply();
         if (totalShares == 0 || totalVemp == 0) {
@@ -52,6 +54,7 @@ contract VempDao is Ownable {
 
     // Leave the VempDao. Claim back your VEMPs.
     function leave(uint256 _share) public {
+        require(blackListAddress[msg.sender] != true, "BlackListed User");
         uint256 totalShares = xVEMP.totalSupply();
         uint256 _userShare =
             _share.mul(VEMP.balanceOf(address(this))).div(totalShares);
@@ -94,5 +97,19 @@ contract VempDao is Ownable {
         require(vempBal >= _amount, "Insufficiently amount");
         bool status = IERC20(_token).transfer(_to, _amount);
         require(status, "Token transfer failed");
+    }
+
+    /**
+     * @dev Used only by admin or owner, used to blacklist any user in any emergency case
+     *
+     * @param _user address of blacklistef user
+     * @param _status status of user
+     */
+    function blackListUser(address _user, bool _status)
+        external
+        onlyOwner
+    {
+        require(blackListAddress[_user] != _status, "Already in same status");
+        blackListAddress[_user] = _status;
     }
 }
