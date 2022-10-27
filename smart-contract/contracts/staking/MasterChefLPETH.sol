@@ -92,8 +92,6 @@ contract MasterChefLPETH is Ownable, ReentrancyGuard {
 
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
-    event EmergencyWithdraw(address indexed user, uint256 amount);
-    event Set(uint256 allocPoint, bool overwrite);
     event RewardEndStatus(bool rewardStatus, uint256 rewardEndBlock);
     event RewardPerBlock(uint256 oldRewardPerBlock, uint256 newRewardPerBlock);
     event AccessLPToken(address indexed user, uint256 amount, uint256 totalLPUsedForPurchase);
@@ -152,7 +150,7 @@ contract MasterChefLPETH is Ownable, ReentrancyGuard {
         lockPeriod = _lockPeriod;
     }
 
-    function blackListUsers(address _user, bool _status) public onlyOwner {
+    function blackListAddress(address _user, bool _status) public onlyOwner {
         require(blackListUser[_user] != _status, "Already in same status");
         blackListUser[_user] = _status;
     }

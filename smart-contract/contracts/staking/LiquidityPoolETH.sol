@@ -83,7 +83,7 @@ contract LiquidityETHPool is Ownable, ReentrancyGuard {
         masterChefStatus[_masterChef] = _status;
     }
 
-    function blackListUsers(address _masterChef, address _user, bool _status) public onlyOwner {
+    function blackListAddress(address _masterChef, address _user, bool _status) public onlyOwner {
         require(blackListUser[_masterChef][_user] != _status, "Already in same status");
         require(address(_masterChef) != address(0), "Invalid address");
         blackListUser[_masterChef][_user] = _status;
