@@ -7,15 +7,17 @@
   "scripts": {
     "build": "npm run compile",
     "compile": "truffle compile",
+    "compileV8": "truffle compile --config ./config/configV8.js",
     "test": "mocha --timeout 10000 --exit --recursive test",
-    "deploy": "truffle migrate --network mainnet",
-    "verify": "truffle run verify Implementation --network mainnet"
+    "deploy": "truffle migrate --config ./config/configV8.js --network kovan",
+    "verify": "truffle run verify MasterChefLPPool@0x957D91eFB95Bedab5722C319191409AB10F45FB6 --config ./config/configV8.js --network kovan"
   },
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
     "@chainlink/contracts": "^0.2.2",
     "@openzeppelin/contracts": "^3.1.0",
+    "@openzeppelin/contracts-upgradeable": "4.4.1", 
     "@truffle/external-compile": "^2.0.6",
     "@truffle/hdwallet-provider": "^1.2.1",
     "bignumber.js": "^9.0.1",

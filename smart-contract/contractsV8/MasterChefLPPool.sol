@@ -1,11 +1,11 @@
-pragma solidity =0.6.12;
+// SPDX-License-Identifier: MIT
 
-import "@openzeppelin/contracts/GSN/Context.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "../common/Ownable.sol";
+pragma solidity ^0.8.9;
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 // MasterChef is the master of VEMP. He can make VEMP and he is a fair guy.
 //
@@ -14,15 +14,14 @@ import "../common/Ownable.sol";
 // distributed and the community can show to govern itself.
 //
 // Have fun reading it. Hopefully it's bug-free. God bless.
-contract MasterChefLPPool is Ownable {
-    using SafeMath for uint256;
-    using SafeERC20 for IERC20;
+contract MasterChefLPPool is Initializable, OwnableUpgradeable {
+    using SafeMathUpgradeable for uint256;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     // Info of each user.
     struct UserInfo {
         uint256 amount;     // How many LP tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
-        uint256 rewardLPDebt; // Reward debt in LP.
         //
         // We do some fancy math here. Basically, any point in time, the amount of VEMPs
         // entitled to a user but is pending to be distributed is:
@@ -38,14 +37,14 @@ contract MasterChefLPPool is Ownable {
 
     // Info of each pool.
     struct PoolInfo {
-        IERC20 lpToken;           // Address of LP token contract.
+        IERC20Upgradeable lpToken;           // Address of LP token contract.
         uint256 allocPoint;       // How many allocation points assigned to this pool. VEMPs to distribute per block.
         uint256 lastRewardBlock;  // Last block number that VEMPs distribution occurs.
         uint256 accVEMPPerShare; // Accumulated VEMPs per share, times 1e12. See below.
     }
 
     // The VEMP TOKEN!
-    IERC20 public VEMP;
+    IERC20Upgradeable public VEMP;
     // admin address.
     address public adminaddr;
     // VEMP tokens created per block.
@@ -73,19 +72,21 @@ contract MasterChefLPPool is Ownable {
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event RewardEndStatus(bool rewardStatus, uint256 rewardEndBlock);
     event RewardPerBlock(uint256 oldRewardPerBlock, uint256 newRewardPerBlock);
+    event setAdmin(address oldAdminaddr, address newAdminaddr);
+    event setWithdrawStatus(bool withdrawStatus);
 
-    constructor() public {}
+    constructor() {}
 
     function initialize(
-        IERC20 _VEMP,
+        IERC20Upgradeable _VEMP,
         address _adminaddr,
         uint256 _VEMPPerBlock,
         uint256 _startBlock    
     ) public initializer {
         require(address(_VEMP) != address(0), "Invalid VEMP address");
         require(address(_adminaddr) != address(0), "Invalid admin address");
-
-        Ownable.init(_adminaddr);
+        
+        __Ownable_init();
         VEMP = _VEMP;
         adminaddr = _adminaddr;
         VEMPPerBlock = _VEMPPerBlock;
@@ -98,7 +99,7 @@ contract MasterChefLPPool is Ownable {
 
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public onlyOwner {
+    function add(uint256 _allocPoint, IERC20Upgradeable _lpToken, bool _withUpdate) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -229,6 +230,7 @@ contract MasterChefLPPool is Ownable {
     // Update withdraw status
     function updateWithdrawStatus(bool _status) public onlyOwner {
         require(withdrawStatus != _status, "Already same status");
+        emit setWithdrawStatus(withdrawStatus);
         withdrawStatus = _status;
     }
 
@@ -243,6 +245,7 @@ contract MasterChefLPPool is Ownable {
     // Update admin address by the previous admin.
     function admin(address _adminaddr) public {
         require(msg.sender == adminaddr, "admin: wut?");
+        emit setAdmin(adminaddr, _adminaddr);
         adminaddr = _adminaddr;
     }
 
