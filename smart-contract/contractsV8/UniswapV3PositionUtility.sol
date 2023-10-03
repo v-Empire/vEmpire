@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.9;
+pragma solidity =0.8.9;
 pragma experimental ABIEncoderV2;
 
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
