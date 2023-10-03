@@ -217,16 +217,17 @@ contract MasterChefV3 is
                 .sub(user.rewardDebt);
             safeVEMPTransfer(msg.sender, pending);
         }
-
+        
         uint totalDeposit = 0;
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
-            uint _amount = transferNFTandGetAmount(_tokenIds[i]);
-            user.erc721TokenId.push(_tokenIds[i]);
-            uniswapV3LpSupply = uniswapV3LpSupply.add(_amount);
-            user.amount = user.amount.add(_amount);
-            totalDeposit = totalDeposit.add(_amount);
+        if(_tokenIds.length > 0) {
+            for (uint256 i = 0; i < _tokenIds.length; i++) {
+                uint _amount = transferNFTandGetAmount(_tokenIds[i]);
+                user.erc721TokenId.push(_tokenIds[i]);
+                uniswapV3LpSupply = uniswapV3LpSupply.add(_amount);
+                user.amount = user.amount.add(_amount);
+                totalDeposit = totalDeposit.add(_amount);
+            }
         }
-
         user.rewardDebt = user.amount.mul(pool.accVEMPPerShare).div(1e12);
         emit Deposit(msg.sender, _pid, totalDeposit);
     }
@@ -316,3 +317,4 @@ contract MasterChefV3 is
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 }
+
