@@ -23,9 +23,9 @@ interface IUniswapV3PositionUtility {
 // Have fun reading it. Hopefully it's bug-free. God bless.
 contract MasterChefV3 is
     Initializable,
+    UUPSUpgradeable,
     OwnableUpgradeable,
-    IERC721ReceiverUpgradeable,
-    UUPSUpgradeable
+    IERC721ReceiverUpgradeable
 {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -99,8 +99,6 @@ contract MasterChefV3 is
     ) public initializer {
         __Ownable_init();
         __UUPSUpgradeable_init();
-
-        require(address(_VEMP) != address(0), "Invalid Address");
 
         VEMP = _VEMP;
         VEMPPerBlock = _VEMPPerBlock;
@@ -217,7 +215,7 @@ contract MasterChefV3 is
                 .sub(user.rewardDebt);
             safeVEMPTransfer(msg.sender, pending);
         }
-        
+
         uint totalDeposit = 0;
         if(_tokenIds.length > 0) {
             for (uint256 i = 0; i < _tokenIds.length; i++) {
@@ -228,6 +226,7 @@ contract MasterChefV3 is
                 totalDeposit = totalDeposit.add(_amount);
             }
         }
+
         user.rewardDebt = user.amount.mul(pool.accVEMPPerShare).div(1e12);
         emit Deposit(msg.sender, _pid, totalDeposit);
     }
@@ -236,7 +235,7 @@ contract MasterChefV3 is
     function withdraw(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        require(user.amount >= 0, "withdraw: not good");
+        require(user.amount > 0, "withdraw: not good");
         updatePool(_pid);
         uint256 pending = user.amount.mul(pool.accVEMPPerShare).div(1e12).sub(
             user.rewardDebt
@@ -294,16 +293,12 @@ contract MasterChefV3 is
     function setUtilityContractAddress(
         IUniswapV3PositionUtility _uniswapUtility
     ) external onlyOwner {
-        require(address(_uniswapUtility) != address(0), "Invalid Address");
-
         uniswapUtility = _uniswapUtility;
         emit SetUtilityContractAddress(_uniswapUtility);
     }
 
     // method to set v3 pair erc721 contract address
     function setERC721ContractAddress(IERC721 _erc721) external onlyOwner {
-        require(address(_erc721) != address(0), "Invalid Address");
-
         erc721Token = _erc721;
         emit SetERC721ContractAddress(_erc721);
     }
@@ -317,4 +312,3 @@ contract MasterChefV3 is
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 }
-
