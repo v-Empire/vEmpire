@@ -23,9 +23,9 @@ interface IUniswapV3PositionUtility {
 // Have fun reading it. Hopefully it's bug-free. God bless.
 contract MasterChefV3 is
     Initializable,
-    UUPSUpgradeable,
     OwnableUpgradeable,
-    IERC721ReceiverUpgradeable
+    IERC721ReceiverUpgradeable,
+    UUPSUpgradeable
 {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -99,7 +99,9 @@ contract MasterChefV3 is
     ) public initializer {
         __Ownable_init();
         __UUPSUpgradeable_init();
-
+	
+	require(address(_VEMP) != address(0), "Invalid Address");
+	
         VEMP = _VEMP;
         VEMPPerBlock = _VEMPPerBlock;
         startBlock = _startBlock;
@@ -293,12 +295,16 @@ contract MasterChefV3 is
     function setUtilityContractAddress(
         IUniswapV3PositionUtility _uniswapUtility
     ) external onlyOwner {
+    	require(address(_uniswapUtility) != address(0), "Invalid Address");
+    	
         uniswapUtility = _uniswapUtility;
         emit SetUtilityContractAddress(_uniswapUtility);
     }
 
     // method to set v3 pair erc721 contract address
     function setERC721ContractAddress(IERC721 _erc721) external onlyOwner {
+    	require(address(_erc721) != address(0), "Invalid Address");
+    	
         erc721Token = _erc721;
         emit SetERC721ContractAddress(_erc721);
     }
