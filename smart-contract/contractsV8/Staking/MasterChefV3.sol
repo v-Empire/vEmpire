@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.9;
+pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -91,6 +91,11 @@ contract MasterChefV3 is
     event updateVEMPPerBlock(uint indexed _VEMPPerBlock);
     event updateBonusEndBlock(uint indexed _bonusEndBlock);
     event SafeTransfer(address _to, uint _amount);
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     function initialize(
         IERC20Upgradeable _VEMP,
