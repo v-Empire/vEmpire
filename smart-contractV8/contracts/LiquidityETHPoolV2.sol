@@ -52,6 +52,16 @@ contract LiquidityETHPoolV2 is
 
     event AddETHInPool(uint256 amount);
     event WithdrawETHToken(address indexed user, uint256 amount);
+    event EmergencyWithdrawTokensWEvent(address _to, uint256 _amount);
+    event QueueRequestEvent(
+        address _user,
+        uint256 _amount,
+        uint256 _totalQueuedETH,
+        uint256 _queueCount,
+        bool _isMigrate
+    );
+    event UnstakeEvent(address _user, uint256 _amount);
+    event DisableUserEvent(address _user, bool _status, bool _isQueued);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -107,6 +117,14 @@ contract LiquidityETHPoolV2 is
         user.currentQueuedETH = totalQueuedETH;
         user.position = queueCount;
         queueCount = queueCount + 1;
+
+        emit QueueRequestEvent(
+            msg.sender,
+            userInfo.amount,
+            totalQueuedETH,
+            queueCount,
+            _isMigrate
+        );
     }
 
     /**
@@ -136,6 +154,8 @@ contract LiquidityETHPoolV2 is
         } else {
             payable(msg.sender).transfer(user.amount);
         }
+
+        emit UnstakeEvent(msg.sender, user.amount);
     }
 
     // Safe add LP in pool
@@ -145,6 +165,7 @@ contract LiquidityETHPoolV2 is
         require(msg.value == _amount, "Eth must be equal to staked amount");
         require(_amount > 0, "ETH amount must be greater than 0");
         totalPooledETH = totalPooledETH + _amount;
+
         emit AddETHInPool(_amount);
     }
 
@@ -169,6 +190,8 @@ contract LiquidityETHPoolV2 is
             user.withdrawStatus = false;
         }
         user.isDisableByAdmin = _status;
+
+        emit DisableUserEvent(_user, _status, user.isQueued);
     }
 
     /**
@@ -186,6 +209,7 @@ contract LiquidityETHPoolV2 is
         uint256 tokenBal = address(this).balance;
         require(tokenBal >= _amount, "Insufficient amount");
         _to.transfer(_amount);
+        emit EmergencyWithdrawTokensWEvent(_to, _amount);
     }
 
     function _authorizeUpgrade(
