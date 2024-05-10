@@ -184,9 +184,10 @@ contract LiquidityETHPoolV2 is
 
         if (user.isQueued && !user.isDisableByAdmin) {
             user.withdrawStatus = true;
-            payable(owner()).transfer(user.amount);
+            if(user.currentQueuedETH <= totalPooledETH) {
+                payable(owner()).transfer(user.amount);
+            }
         } else if (user.isQueued && user.isDisableByAdmin) {
-            require(msg.value == user.amount, "Invalid Deposit Amount");
             user.withdrawStatus = false;
         }
         user.isDisableByAdmin = _status;
